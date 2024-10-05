@@ -1,0 +1,35 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore dotenv environment files
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore compiled output
+dist/
+build/
+
+# Ignore temporary files
+tmp-*
+*.tmp
+*.temp
+*.swp
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore package-lock and yarn.lock if not needed
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
