@@ -1,6 +1,6 @@
 import { produce, current } from "immer";
 import { nanoid } from "nanoid";
-import { stateSetup, mergeReducer } from "./merge-import.js";
+import { stateSetup, mergeReducer } from "./import-for-merge.js";
 
 const { dispatch, state, allStates } = stateSetup();
 
