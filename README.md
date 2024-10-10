@@ -2,9 +2,19 @@
 
 Recreatee rxJS toosl using funcitona programmignto get funciotnal beneftis
 
+#### Goals:
+
 - time travel debugging
-- serliziable inspectable state
+
+- [x] serliziable inspectable state
 - easier testing
+  - create tests easily printing out state and comparing it in future tests
+  - ability to inject into the middle of exection with mocks/spies and run test assertions in middle of program
+    For example, you can check if 2 observables are completed and inspect the state a 3rd observable
+
+Maybe
+
+- automatic marble testing creation?
 
 ## Why
 
@@ -29,7 +39,7 @@ Recreatee rxJS toosl using funcitona programmignto get funciotnal beneftis
 
      Utilties like merge, concat and mergeAll should not create obsevables because that crates more imperceptible state because of more obserbles
 
-
 ## do
-    - change state to not be optimistic
-       only change state after effect
+
+    - ~~change state to not be optimistic~~
+       ~~only change state after effect~~

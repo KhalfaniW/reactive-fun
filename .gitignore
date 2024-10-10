@@ -22,6 +22,7 @@ tmp-*
 *.swp
 
 # Ignore IDE specific files
+.#*
 .vscode/
 .idea/
 
