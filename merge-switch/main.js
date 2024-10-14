@@ -1,11 +1,11 @@
 import { mergeAllReducer, runMergeAllEffects } from "./mergeAllReducer.js";
 import { switchAllReducer, runSwitchAllEffects } from "./switchAllReducer.js";
-
+import { scanReducer } from "./scanReducer.js";
 let state = undefined;
 let allStates = [];
 let allActions = [];
 // make state read only all state reads explicit
-export const getState = () => ({ ...state, debug: { allStates, allActions } });
+export const getState = () => ({ ...state });
 
 globalThis.getStateForDebugging = getState;
 
@@ -246,6 +246,7 @@ export function dispatch(action) {
     mainReducer,
     subscriptionReducer,
     mergeAllReducer,
+    scanReducer,
     switchAllReducer,
   ].reduce((state, reducer) => {
     return reducer(state, action);

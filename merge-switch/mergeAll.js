@@ -25,7 +25,6 @@ export function mergeAll({
    * @typedef {(emission: any, next: (emission: any, next: function) => void) => void} continuation
    */
   return (emission, next) => {
-
     const isOperatorStateNotInitizlized = !getState().operatorStates.find(
       (operator) => operator.id === operatorId,
     );

@@ -18,9 +18,7 @@ test("test concatAll using mergeAll concurrency 1", () => {
       next: (value) => {},
 
       complete: () => {
-        expect(_.omit(getStateTesting())).toMatchObject(
-          expected_concatAll_EndState_,
-        );
+        expect(getStateTesting()).toMatchObject(expected_EndState);
         resolve();
       },
     });
@@ -141,7 +139,7 @@ function cleanFunctions(programState) {
     }
   });
 }
-const expected_concatAll_EndState_ = {
+const expected_EndState = {
   emittedValues: [
     {
       id: "obs_0",
