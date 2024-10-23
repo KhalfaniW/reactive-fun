@@ -1,5 +1,9 @@
 import { mergeAllReducer, runMergeAllEffects } from "./mergeAllReducer.js";
 import { switchAllReducer, runSwitchAllEffects } from "./switchAllReducer.js";
+import {
+  exhaustAllReducer,
+  runExhaustAllEffects,
+} from "./exhaustAllReducer.js";
 import { scanReducer } from "./scanReducer.js";
 
 let state = undefined;
@@ -29,6 +33,7 @@ activeCount: 0,
 concurrentLimit: Infinity,
 },
  */
+
 
 export function mainReducer(
   stateInput = { emittedValues: [], isCompleted: false, isStarted: false },
@@ -93,6 +98,11 @@ export function mainReducer(
         };
       }
       return state;
+    case "PARENT-COMPLETE":
+      return {
+        ...state,
+        isParentComplete: true,
+      };
 
     case "ALL-COMPLETE":
       return { ...state, isCompleted: true };
@@ -172,7 +182,11 @@ function subscriptionReducer(state, action) {
         return {
           ...state,
           operatorStates: state.operatorStates.map((operator) => {
-            if (operator.type === "switchAll") {
+            //TODO make generalized
+            if (
+              operator.type === "switchAll" ||
+              operator.type === "exhaustAll"
+            ) {
               return { ...operator, currentObservableId: action.observableId };
             }
             return operator;
@@ -252,6 +266,7 @@ export function dispatch(action) {
     mergeAllReducer,
     scanReducer,
     switchAllReducer,
+    exhaustAllReducer,
   ].reduce((state, reducer) => {
     return reducer(state, action);
   }, state);
@@ -266,6 +281,7 @@ export function dispatch(action) {
     const x = { ...stateCopyForEffects };
     runMergeAllEffects(x, dispatch);
     runSwitchAllEffects(x, dispatch);
+    runExhaustAllEffects(x, dispatch);
   }
 }
 function runMainEffects(state, dispatch) {
