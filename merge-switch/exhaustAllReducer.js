@@ -42,7 +42,7 @@ export function exhaustAllReducer(
       stateChange: stateChange,
     });
   };
-  const thisOperator = state.operatorStates.find(
+  const thisOperator = state.operatorStates?.find(
     (operator) => operator.id === action.operatorId,
   );
 

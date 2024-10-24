@@ -1,7 +1,7 @@
 import { mainReducer, getState } from "./main.js";
 
 export function scanReducer(state, action) {
-  const thisOperator = state.operatorStates.find(
+  const thisOperator = state.operatorStates?.find(
     (operator) => operator.id === action.operatorId,
   );
 
