@@ -19,6 +19,9 @@
     "nanoid": "^5.0.7",
     "redux": "^5.0.1"
   },
+    "jest": {
+        "testTimeout": 2500
+    },
   "devDependencies": {
     "rxjs": "^7.8.1"
   }
