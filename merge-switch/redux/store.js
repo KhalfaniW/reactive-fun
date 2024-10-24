@@ -2,11 +2,11 @@ import { combineReducers, createStore, applyMiddleware } from "redux";
 
 import {
   asyncDispatchMiddleware,
-  runEffects,
   stateReducer,
   createSaveHistoryMiddleware,
   addDispatchContext,
 } from "./middleware";
+import { runEffectsMiddleWare } from "./effects";
 
 export function makeStoreWithExtra() {
   let allActions_ = [];
@@ -17,7 +17,7 @@ export function makeStoreWithExtra() {
     applyMiddleware(
       addDispatchContext,
       createSaveHistoryMiddleware(allStates_, allActions_),
-      runEffects,
+      runEffectsMiddleWare,
       asyncDispatchMiddleware,
     ),
   );

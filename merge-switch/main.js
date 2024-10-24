@@ -239,11 +239,3 @@ export function subscriptionReducer(state, action) {
   return state;
 }
 
-export function runMainEffects(state, dispatch) {
-  if (state.effectObject?.type == "COMPLETE_STATE") {
-    dispatch({ type: "ALL-COMPLETE" });
-    state.complete();
-    return;
-  }
-  return state;
-}

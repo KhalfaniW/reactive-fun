@@ -1,5 +1,3 @@
-import { mainReducer } from "./main.js";
-
 /**
  * @param {{ list: any[], selector: (element: any) => boolean, stateChange: object }} params
  * @param {any[]} params.list
@@ -147,10 +145,14 @@ function handleObservableCompleteMerge(updatedState, action) {
   const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
 
   if (isEverythingFinished) {
-    return mainReducer(updatedState, {
-      type: "HANDLE-OPERATOR-COMPLETE",
-      operatorId: action.operatorId,
-    });
+    return {
+      ...updatedState,
+      effectObject: {
+        type: "COMPLETE-OPERATOR",
+        operatorId: action.operatorId,
+      },
+      observables: updatedState.observables,
+    };
   }
 
   return {
@@ -158,47 +160,4 @@ function handleObservableCompleteMerge(updatedState, action) {
     observables: updatedState.observables,
   };
 }
-export function runMergeAllEffects(state, dispatch) {
-  //TODO add array effect handling
-  if (Array.isArray(state.effectObject)) return;
-  if (!state.effectObject) console.log(state);
-  switch (state.effectObject.type) {
-    case "SUBSCRIBE-EFFECT(mergeAll)":
-      const observable = state.observables.find(
-        (obs) => obs.id == state.effectObject.observableId,
-      );
 
-      const operatorState = state.operatorStates.find(
-        (operator) => operator.id == observable.operatorId,
-      );
-      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
-        throw new Error(
-          `obervable ${JSON.stringify(
-            observable,
-          )} is not ready to be subscribed`,
-        );
-      }
-
-      observable.subscribe({
-        next: (value) => {
-          operatorState.next(value, observable);
-        },
-        complete: () => {
-          dispatch({
-            type: "HANDLE-OBSERVABLE-COMPLETE(mergeAll)",
-            observableId: observable.id,
-            operatorId: state.effectObject.operatorId,
-          });
-        },
-      });
-      dispatch({
-        type: "SUBSCRIPTION-START-1",
-        observableId: observable.id,
-        operatorId: state.effectObject.operatorId,
-      });
-      break;
-
-    default:
-      break;
-  }
-}

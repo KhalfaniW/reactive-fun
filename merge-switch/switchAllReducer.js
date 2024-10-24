@@ -136,10 +136,13 @@ export function switchAllReducer(
         thisOperator.currentObservableId === action.observableId;
 
       if (isEverythingFinished) {
-        return mainReducer(updatedState, {
-          type: "HANDLE-OPERATOR-COMPLETE",
-          operatorId: action.operatorId,
-        });
+        return {
+          ...updatedState,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
       }
 
       return updatedState;
@@ -186,10 +189,13 @@ function handleObservableCompleteRM(updatedState, action) {
   const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
 
   if (isEverythingFinished) {
-    return mainReducer(updatedState, {
-      type: "HANDLE-OPERATOR-COMPLETE",
-      operatorId: action.operatorId,
-    });
+    return {
+      ...updatedState,
+      effectObject: {
+        type: "COMPLETE-OPERATOR",
+        operatorId: action.operatorId,
+      },
+    };
   }
 
   return {

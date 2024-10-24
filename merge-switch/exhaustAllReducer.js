@@ -112,10 +112,13 @@ export function exhaustAllReducer(
 
     case "PARENT-COMPLETE":
       if (isEverythingFinished) {
-        return mainReducer(state, {
-          type: "HANDLE-OPERATOR-COMPLETE",
-          operatorId: thisOperator.id,
-        });
+        return {
+          ...state,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
       }
       return state;
 
@@ -126,10 +129,13 @@ export function exhaustAllReducer(
       });
 
       if (isEverythingFinished) {
-        return mainReducer(updatedState, {
-          type: "HANDLE-OPERATOR-COMPLETE",
-          operatorId: action.operatorId,
-        });
+        return {
+          ...updatedState,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
       }
 
       return updatedState;
@@ -176,10 +182,13 @@ function handleObservableCompleteRM(updatedState, action) {
   const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
 
   if (isEverythingFinished) {
-    return mainReducer(updatedState, {
-      type: "HANDLE-OPERATOR-COMPLETE",
-      operatorId: action.operatorId,
-    });
+    return {
+      ...updatedState,
+      effectObject: {
+        type: "COMPLETE-OPERATOR",
+        operatorId: action.operatorId,
+      },
+    };
   }
 
   return {
