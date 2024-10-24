@@ -1,12 +1,5 @@
-import { mergeAllReducer, runMergeAllEffects } from "./mergeAllReducer.js";
-import { switchAllReducer, runSwitchAllEffects } from "./switchAllReducer.js";
-import {
-  exhaustAllReducer,
-  runExhaustAllEffects,
-} from "./exhaustAllReducer.js";
-import { scanReducer } from "./scanReducer.js";
-
 import { combineReducers, createStore, applyMiddleware } from "redux";
+import { makeStoreWithExtra } from "./redux/store.js";
 
 const storeWithExtra = makeStoreWithExtra();
 export const getState = storeWithExtra.getState;
@@ -14,7 +7,7 @@ export const dispatch = storeWithExtra.dispatch;
 
 globalThis.getStateForDebugging = () => ({
   ...getState(),
-  debug: { allStates, allActions },
+  debug: storeWithExtra.debug,
 });
 
 // TODO refactor to have observables and state be more like observable struct with state in the statemachine
@@ -110,7 +103,7 @@ export function mainReducer(
   return draftState;
 }
 
-function subscriptionReducer(state, action) {
+export function subscriptionReducer(state, action) {
   const draftState = { ...state };
   //TODO seperate merge and switch Subscriptions cancel
   const isMERGE = JSON.stringify(state).includes("merge");
@@ -246,68 +239,7 @@ function subscriptionReducer(state, action) {
   return state;
 }
 
-function makeStoreWithExtra() {
-  let allActions_ = [];
-  let allStates_ = [];
-  const stateReducer = (initialState, action) =>
-    [
-      mainReducer,
-      subscriptionReducer,
-      mergeAllReducer,
-      scanReducer,
-      switchAllReducer,
-      exhaustAllReducer,
-    ].reduce((currentState, reducer) => {
-      return reducer(currentState, action);
-    }, initialState);
-  const baseReduxStore = createStore(
-    stateReducer,
-    applyMiddleware(
-      (store) => (next) => (action) => {
-        const resultAction = next(action);
-        allActions_.push(action);
-        allStates_.push(store.getState());
-        return resultAction;
-      },
-      (store) => (next) => (action) => {
-        let stackTraceOrigin = null;
-        try {
-          throw new Error("error to log dispatch origin trace");
-        } catch (dispatchOriginError) {
-          stackTraceOrigin = () =>
-            dispatchOriginError.stack.split("\n").slice(2);
-        }
-        const newAction = {
-          ...action,
-          stackTraceOrigin,
-        };
-        return next(newAction);
-      },
-      (store) => (next) => (action) => {
-        const resultAction = next(action);
-        const resultState = store.getState();
-
-        if (resultState.effectObject) {
-          runMainEffects(resultState, dispatch);
-          runMergeAllEffects(resultState, dispatch);
-          runSwitchAllEffects(resultState, dispatch);
-          runExhaustAllEffects(resultState, dispatch);
-        }
-        return resultAction;
-      },
-    ),
-  );
-
-  return {
-    ...baseReduxStore,
-    debug: {
-      allStates: allStates_,
-      allActions: allActions_,
-    },
-  };
-}
-
-function runMainEffects(state, dispatch) {
+export function runMainEffects(state, dispatch) {
   if (state.effectObject?.type == "COMPLETE_STATE") {
     dispatch({ type: "ALL-COMPLETE" });
     state.complete();
