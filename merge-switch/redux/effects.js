@@ -46,7 +46,7 @@ function validateIfSubscribable(observable) {
   }
 }
 
-export function runMergeAllEffects(state, dispatch) {
+export function runMergeAllEffects(state, dispatch, store) {
   switch (state.effectObject.type) {
     case "SUBSCRIBE-EFFECT(mergeAll)":
       const observable = state.observables.find(
@@ -59,18 +59,7 @@ export function runMergeAllEffects(state, dispatch) {
 
       validateIfSubscribable(observable);
 
-      observable.subscribe({
-        next: (value) => {
-          operatorState.next(value, observable);
-        },
-        complete: () => {
-          dispatch({
-            type: "HANDLE-OBSERVABLE-COMPLETE(mergeAll)",
-            observableId: observable.id,
-            operatorId: state.effectObject.operatorId,
-          });
-        },
-      });
+      observable.subscribe(state.effectObject.createSubscriber(store));
       dispatch({
         type: "SUBSCRIPTION-START-1",
         observableId: observable.id,
@@ -171,6 +160,7 @@ function runSwitchEffects(state, dispatch, store) {
 
   switch (state.effectObject.type) {
     case "UNSUBSCRIBE-EFFECT(switchAll)":
+
       if (observable.unsubscribe) observable.unsubscribe();
 
       dispatch({
@@ -180,46 +170,17 @@ function runSwitchEffects(state, dispatch, store) {
       break;
 
     case "SUBSCRIBE-EFFECT(switchAll)":
-      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
-        throw new Error(
-          `obervable ${JSON.stringify(
-            observable,
-          )} is not ready to be subscribed`,
-        );
-      }
-
+      validateIfSubscribable(observable);
+      //operator needs to go before actually subscribing because sometiems the observable/subscriber needs to
+      //check the currently subscribed entity for calcuations
       dispatch({
         type: "SUBSCRIPTION-START-1",
         observableId: observable.id,
         operatorId: state.effectObject.operatorId,
       });
-
-      const subcribeReturnValue = observable.subscribe({
-        next: (value) => {
-          const operatorState = store
-            .getState()
-            .operatorStates.find(
-              (operator) => operator.id == observable?.operatorId,
-            );
-
-          if (operatorState.currentObservableId === observable.id) {
-            dispatch({
-              type: "HANDLE-EMISSION",
-              observableId: observable.id,
-              emittedValue: value,
-            });
-
-            operatorState.next(value, observable);
-          }
-        },
-        complete: () => {
-          dispatch({
-            type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
-            observableId: observable.id,
-            operatorId: state.effectObject.operatorId,
-          });
-        },
-      });
+      const subcribeReturnValue = observable.subscribe(
+        state.effectObject.createSubscriber(store),
+      );
 
       if (typeof subcribeReturnValue === "function") {
         dispatch({

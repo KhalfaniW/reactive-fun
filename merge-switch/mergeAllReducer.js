@@ -86,6 +86,10 @@ export function mergeAllReducer(
           type: "SUBSCRIBE-EFFECT(mergeAll)",
           observableId: action.newObservable.id,
           operatorId: action.operatorId,
+          createSubscriber: createMergeSubscriberLink({
+            observableId: action.newObservable.id,
+            operatorId: action.operatorId,
+          }),
         },
       };
 
@@ -107,6 +111,30 @@ export function mergeAllReducer(
       return state;
   }
 }
+
+function createMergeSubscriberLink({ observableId, operatorId }) {
+  // needs to be linked to the store
+  return (store) => {
+    const state = store.getState();
+    const observable = state.observables.find((obs) => obs.id == observableId);
+    const operatorState = state.operatorStates.find(
+      (operator) => operator.id == observable.operatorId,
+    );
+    return {
+      next: (value) => {
+        operatorState.next(value, observable);
+      },
+      complete: () => {
+        store.dispatch({
+          type: "HANDLE-OBSERVABLE-COMPLETE(mergeAll)",
+          observableId: observable.id,
+          operatorId: operatorId,
+        });
+      },
+    };
+  };
+}
+
 function handleObservableCompleteMerge(updatedState, action) {
   const runningObservableCount = updatedState.observables.filter(
     (observable) =>
@@ -132,6 +160,10 @@ function handleObservableCompleteMerge(updatedState, action) {
         type: "SUBSCRIBE-EFFECT(mergeAll)",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
+        createSubscriber: createMergeSubscriberLink({
+          observableId: nextBufferedObservable.id,
+          operatorId: action.operatorId,
+        }),
       },
     };
   }
@@ -160,4 +192,3 @@ function handleObservableCompleteMerge(updatedState, action) {
     observables: updatedState.observables,
   };
 }
-

@@ -80,6 +80,10 @@ export function switchAllReducer(
               type: "SUBSCRIBE-EFFECT(switchAll)",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
+              createSubscriber: createSubscriberLink({
+                observableId: action.newObservable.id,
+                operatorId: action.operatorId,
+              }),
             },
           ],
         };
@@ -96,6 +100,10 @@ export function switchAllReducer(
             type: "SUBSCRIBE-EFFECT(switchAll)",
             observableId: action.newObservable.id,
             operatorId: action.operatorId,
+            createSubscriber: createSubscriberLink({
+              observableId: action.newObservable.id,
+              operatorId: action.operatorId,
+            }),
           },
         ],
       };
@@ -151,6 +159,50 @@ export function switchAllReducer(
       return state;
   }
 }
+
+function createSubscriberLink({ observableId, operatorId }) {
+  // needs to be linked to the store
+  return (store) => {
+    const state = store.getState();
+    const observable = state.observables.find((obs) => obs.id == observableId);
+    const operatorState = state.operatorStates.find(
+      (operator) => operator.id == observable.operatorId,
+    );
+
+    const subscriber = {
+      next: (value) => {
+        const observable = store
+          .getState()
+          .observables.find((obs) => obs.id == observableId);
+
+        const operatorState = store
+          .getState()
+          .operatorStates.find(
+            (operator) => operator.id == observable?.operatorId,
+          );
+
+        if (operatorState.currentObservableId === observable.id) {
+          store.dispatch({
+            type: "HANDLE-EMISSION",
+            observableId: observable.id,
+            emittedValue: value,
+          });
+
+          operatorState.next(value, observable);
+        }
+      },
+      complete: () => {
+        store.dispatch({
+          type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
+          observableId: observableId,
+          operatorId: operatorId,
+        });
+      },
+    };
+    return subscriber;
+  };
+}
+
 function handleObservableCompleteRM(updatedState, action) {
   const runningObservableCount = updatedState.observables.filter(
     (observable) =>
@@ -203,4 +255,3 @@ function handleObservableCompleteRM(updatedState, action) {
     observables: updatedState.observables,
   };
 }
-
