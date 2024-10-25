@@ -1,9 +1,5 @@
 import { mergeAllReducer } from "../mergeAllReducer.js";
-import { switchAllReducer, runSwitchAllEffects } from "../switchAllReducer.js";
-import {
-  exhaustAllReducer,
-  runExhaustAllEffects,
-} from "../exhaustAllReducer.js";
+import { switchAllReducer } from "../switchAllReducer.js";
 import { scanReducer } from "../scanReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
 
@@ -30,8 +26,8 @@ export const runEffectsMiddleWare = (store) => (next) => (action) => {
   if (resultState.effectObject) {
     runMainEffects(resultState, store.dispatch);
     runMergeAllEffects(resultState, store.dispatch);
-    runSwitchAllEffects(resultState, store.dispatch);
-    runExhaustAllEffects(resultState, store.dispatch);
+    runAllEffects(resultState, store.dispatch, store, runExhaustEffects);
+    runAllEffects(resultState, store.dispatch, store, runSwitchEffects);
   }
   return resultAction;
 };
@@ -73,6 +69,168 @@ export function runMergeAllEffects(state, dispatch) {
         observableId: observable.id,
         operatorId: state.effectObject.operatorId,
       });
+      break;
+
+    default:
+      break;
+  }
+}
+
+function runExhaustEffects(_state, dispatch, store) {
+  const state = { ..._state };
+
+  const observable = state.observables.find(
+    (obs) => obs.id == state.effectObject?.observableId,
+  );
+
+  const operatorState = state.operatorStates.find(
+    (operator) => operator.id == observable?.operatorId,
+  );
+
+  switch (state.effectObject.type) {
+    case "UNSUBSCRIBE-EFFECT(exhaustAll)":
+      if (observable.unsubscribe) observable.unsubscribe();
+
+      dispatch({
+        type: "SUBSCRIPTION-CANCEL-1",
+        observableId: observable.id,
+      });
+      break;
+
+    case "SUBSCRIBE-EFFECT(exhaustAll)":
+      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
+        throw new Error(
+          `obervable ${JSON.stringify(
+            observable,
+          )} is not ready to be subscribed`,
+        );
+      }
+
+      dispatch({
+        type: "SUBSCRIPTION-START-1",
+        observableId: observable.id,
+        operatorId: state.effectObject.operatorId,
+      });
+
+      const subcribeReturnValue = observable.subscribe({
+        next: (value) => {
+          const operatorState = store
+            .getState()
+            .operatorStates.find(
+              (operator) => operator.id == observable?.operatorId,
+            );
+
+          if (operatorState.currentObservableId === observable.id) {
+            dispatch({
+              type: "HANDLE-EMISSION",
+              observableId: observable.id,
+              emittedValue: value,
+            });
+
+            operatorState.next(value, observable);
+          }
+        },
+        complete: () => {
+          dispatch({
+            type: "HANDLE-OBSERVABLE-COMPLETE(exhaustAll)",
+            observableId: observable.id,
+            operatorId: state.effectObject.operatorId,
+          });
+        },
+      });
+
+      if (typeof subcribeReturnValue === "function") {
+        dispatch({
+          type: "SET-UNSUBSCRIBE",
+          observableId: observable.id,
+          unsubscribe: subcribeReturnValue,
+        });
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+export function runAllEffects(state, dispatch, store, runEffects) {
+  if (Array.isArray(state.effectObject)) {
+    state.effectObject.forEach((e) => {
+      runEffects({ ...state, effectObject: e }, dispatch, store);
+    });
+  } else {
+    runEffects(state, dispatch, store);
+  }
+}
+function runSwitchEffects(_state, dispatch, store) {
+  const state = { ..._state };
+
+  const observable = state.observables.find(
+    (obs) => obs.id == state.effectObject?.observableId,
+  );
+
+  const operatorState = state.operatorStates.find(
+    (operator) => operator.id == observable?.operatorId,
+  );
+
+  switch (state.effectObject.type) {
+    case "UNSUBSCRIBE-EFFECT(switchAll)":
+      if (observable.unsubscribe) observable.unsubscribe();
+
+      dispatch({
+        type: "SUBSCRIPTION-CANCEL-1",
+        observableId: observable.id,
+      });
+      break;
+
+    case "SUBSCRIBE-EFFECT(switchAll)":
+      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
+        throw new Error(
+          `obervable ${JSON.stringify(
+            observable,
+          )} is not ready to be subscribed`,
+        );
+      }
+
+      dispatch({
+        type: "SUBSCRIPTION-START-1",
+        observableId: observable.id,
+        operatorId: state.effectObject.operatorId,
+      });
+
+      const subcribeReturnValue = observable.subscribe({
+        next: (value) => {
+          const operatorState = store
+            .getState()
+            .operatorStates.find(
+              (operator) => operator.id == observable?.operatorId,
+            );
+
+          if (operatorState.currentObservableId === observable.id) {
+            dispatch({
+              type: "HANDLE-EMISSION",
+              observableId: observable.id,
+              emittedValue: value,
+            });
+
+            operatorState.next(value, observable);
+          }
+        },
+        complete: () => {
+          dispatch({
+            type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
+            observableId: observable.id,
+            operatorId: state.effectObject.operatorId,
+          });
+        },
+      });
+
+      if (typeof subcribeReturnValue === "function") {
+        dispatch({
+          type: "SET-UNSUBSCRIBE",
+          observableId: observable.id,
+          unsubscribe: subcribeReturnValue,
+        });
+      }
       break;
 
     default:

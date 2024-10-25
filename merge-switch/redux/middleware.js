@@ -1,10 +1,7 @@
 import { combineReducers, createStore, applyMiddleware } from "redux";
 import { mergeAllReducer } from "../mergeAllReducer.js";
-import { switchAllReducer, runSwitchAllEffects } from "../switchAllReducer.js";
-import {
-  exhaustAllReducer,
-  runExhaustAllEffects,
-} from "../exhaustAllReducer.js";
+import { switchAllReducer } from "../switchAllReducer.js";
+import { exhaustAllReducer } from "../exhaustAllReducer.js";
 import { scanReducer } from "../scanReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
 
@@ -34,8 +31,6 @@ export const asyncDispatchMiddleware = (store) => (next) => (action) => {
 
   return res;
 };
-
-
 
 export const stateReducer = (initialState, action) =>
   [
