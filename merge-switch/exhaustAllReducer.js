@@ -77,6 +77,10 @@ export function exhaustAllReducer(
               type: "SUBSCRIBE-EFFECT(exhaustAll)",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
+              createSubscriber: createSubscriberLink({
+                observableId: action.newObservable.id,
+                operatorId: action.operatorId,
+              }),
             },
           ],
         };
@@ -144,6 +148,7 @@ export function exhaustAllReducer(
       return state;
   }
 }
+
 function handleObservableCompleteRM(updatedState, action) {
   const runningObservableCount = updatedState.observables.filter(
     (observable) =>
@@ -165,10 +170,15 @@ function handleObservableCompleteRM(updatedState, action) {
   ) {
     return {
       ...updatedState,
+
       effectObject: {
         type: "SUBSCRIBE-EFFECT(exhaustAll)",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
+        createSubscriber: createSubscriberLink({
+          observableId: nextBufferedObservable.id,
+          operatorId: action.operatorId,
+        }),
       },
     };
   }
@@ -197,3 +207,44 @@ function handleObservableCompleteRM(updatedState, action) {
   };
 }
 
+function createSubscriberLink({ observableId, operatorId }) {
+  return (store) => {
+    const state = store.getState();
+    const observable = state.observables.find((obs) => obs.id == observableId);
+    const operatorState = state.operatorStates.find(
+      (operator) => operator.id == observable.operatorId,
+    );
+
+    const subscriber = {
+      next: (value) => {
+        const observable = store
+          .getState()
+          .observables.find((obs) => obs.id == observableId);
+
+        const operatorState = store
+          .getState()
+          .operatorStates.find(
+            (operator) => operator.id == observable?.operatorId,
+          );
+
+        if (operatorState.currentObservableId === observable.id) {
+          store.dispatch({
+            type: "HANDLE-EMISSION",
+            observableId: observable.id,
+            emittedValue: value,
+          });
+
+          operatorState.next(value, observable);
+        }
+      },
+      complete: () => {
+        store.dispatch({
+          type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
+          observableId: observableId,
+          operatorId: operatorId,
+        });
+      },
+    };
+    return subscriber;
+  };
+}
