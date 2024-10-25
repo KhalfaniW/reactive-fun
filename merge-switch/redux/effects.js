@@ -17,24 +17,36 @@ export function runMainEffects(state, dispatch) {
     state.complete();
     return;
   }
-  return state;
 }
+
 export const runEffectsMiddleWare = (store) => (next) => (action) => {
   const resultAction = next(action);
   const resultState = store.getState();
 
   if (resultState.effectObject) {
-    runMainEffects(resultState, store.dispatch);
-    runMergeAllEffects(resultState, store.dispatch);
-    runAllEffects(resultState, store.dispatch, store, runExhaustEffects);
-    runAllEffects(resultState, store.dispatch, store, runSwitchEffects);
+    const effectRunners = [
+      runMainEffects,
+      runMergeAllEffects,
+      runExhaustEffects,
+      runSwitchEffects,
+    ];
+
+    for (const runEffects of effectRunners) {
+      runAllEffects(resultState, store.dispatch, store, runEffects);
+    }
   }
   return resultAction;
 };
+
+function validateIfSubscribable(observable) {
+  if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
+    throw new Error(
+      `obervable ${JSON.stringify(observable)} is not ready to be subscribed`,
+    );
+  }
+}
+
 export function runMergeAllEffects(state, dispatch) {
-  //TODO add array effect handling
-  if (Array.isArray(state.effectObject)) return;
-  if (!state.effectObject) console.log(state);
   switch (state.effectObject.type) {
     case "SUBSCRIBE-EFFECT(mergeAll)":
       const observable = state.observables.find(
@@ -44,13 +56,8 @@ export function runMergeAllEffects(state, dispatch) {
       const operatorState = state.operatorStates.find(
         (operator) => operator.id == observable.operatorId,
       );
-      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
-        throw new Error(
-          `obervable ${JSON.stringify(
-            observable,
-          )} is not ready to be subscribed`,
-        );
-      }
+
+      validateIfSubscribable(observable);
 
       observable.subscribe({
         next: (value) => {
@@ -76,9 +83,7 @@ export function runMergeAllEffects(state, dispatch) {
   }
 }
 
-function runExhaustEffects(_state, dispatch, store) {
-  const state = { ..._state };
-
+function runExhaustEffects(state, dispatch, store) {
   const observable = state.observables.find(
     (obs) => obs.id == state.effectObject?.observableId,
   );
@@ -98,13 +103,7 @@ function runExhaustEffects(_state, dispatch, store) {
       break;
 
     case "SUBSCRIBE-EFFECT(exhaustAll)":
-      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
-        throw new Error(
-          `obervable ${JSON.stringify(
-            observable,
-          )} is not ready to be subscribed`,
-        );
-      }
+      validateIfSubscribable(observable);
 
       dispatch({
         type: "SUBSCRIPTION-START-1",
@@ -161,9 +160,7 @@ export function runAllEffects(state, dispatch, store, runEffects) {
     runEffects(state, dispatch, store);
   }
 }
-function runSwitchEffects(_state, dispatch, store) {
-  const state = { ..._state };
-
+function runSwitchEffects(state, dispatch, store) {
   const observable = state.observables.find(
     (obs) => obs.id == state.effectObject?.observableId,
   );
