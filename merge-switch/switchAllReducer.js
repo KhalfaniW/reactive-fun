@@ -72,14 +72,18 @@ export function switchAllReducer(
 
           effectObject: [
             {
-              type: "UNSUBSCRIBE-EFFECT(switchAll)",
+              type: "UNSUBSCRIBE-EFFECT",
               observableId: currentOperator.currentObservableId,
               operatorId: action.operatorId,
             },
             {
-              type: "SUBSCRIBE-EFFECT(switchAll)",
+              type: "SUBSCRIBE-EFFECT",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
+              createSubscriber: createSubscriberLink({
+                observableId: action.newObservable.id,
+                operatorId: action.operatorId,
+              }),
             },
           ],
         };
@@ -93,9 +97,13 @@ export function switchAllReducer(
 
         effectObject: [
           {
-            type: "SUBSCRIBE-EFFECT(switchAll)",
+            type: "SUBSCRIBE-EFFECT",
             observableId: action.newObservable.id,
             operatorId: action.operatorId,
+            createSubscriber: createSubscriberLink({
+              observableId: action.newObservable.id,
+              operatorId: action.operatorId,
+            }),
           },
         ],
       };
@@ -136,10 +144,13 @@ export function switchAllReducer(
         thisOperator.currentObservableId === action.observableId;
 
       if (isEverythingFinished) {
-        return mainReducer(updatedState, {
-          type: "HANDLE-OPERATOR-COMPLETE",
-          operatorId: action.operatorId,
-        });
+        return {
+          ...updatedState,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
       }
 
       return updatedState;
@@ -148,6 +159,50 @@ export function switchAllReducer(
       return state;
   }
 }
+
+function createSubscriberLink({ observableId, operatorId }) {
+  // needs to be linked to the store
+  return (store) => {
+    const state = store.getState();
+    const observable = state.observables.find((obs) => obs.id == observableId);
+    const operatorState = state.operatorStates.find(
+      (operator) => operator.id == observable.operatorId,
+    );
+
+    const subscriber = {
+      next: (value) => {
+        const observable = store
+          .getState()
+          .observables.find((obs) => obs.id == observableId);
+
+        const operatorState = store
+          .getState()
+          .operatorStates.find(
+            (operator) => operator.id == observable?.operatorId,
+          );
+
+        if (operatorState.currentObservableId === observable.id) {
+          store.dispatch({
+            type: "HANDLE-EMISSION",
+            observableId: observable.id,
+            emittedValue: value,
+          });
+
+          operatorState.next(value, observable);
+        }
+      },
+      complete: () => {
+        store.dispatch({
+          type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
+          observableId: observableId,
+          operatorId: operatorId,
+        });
+      },
+    };
+    return subscriber;
+  };
+}
+
 function handleObservableCompleteRM(updatedState, action) {
   const runningObservableCount = updatedState.observables.filter(
     (observable) =>
@@ -170,7 +225,7 @@ function handleObservableCompleteRM(updatedState, action) {
     return {
       ...updatedState,
       effectObject: {
-        type: "SUBSCRIBE-EFFECT(switchAll)",
+        type: "SUBSCRIBE-EFFECT",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
       },
@@ -186,98 +241,17 @@ function handleObservableCompleteRM(updatedState, action) {
   const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
 
   if (isEverythingFinished) {
-    return mainReducer(updatedState, {
-      type: "HANDLE-OPERATOR-COMPLETE",
-      operatorId: action.operatorId,
-    });
+    return {
+      ...updatedState,
+      effectObject: {
+        type: "COMPLETE-OPERATOR",
+        operatorId: action.operatorId,
+      },
+    };
   }
 
   return {
     ...updatedState,
     observables: updatedState.observables,
   };
-}
-
-export function runSwitchAllEffects(state, dispatch) {
-  if (Array.isArray(state.effectObject)) {
-    state.effectObject.forEach((e) => {
-      runEffects({ ...state, effectObject: e }, dispatch);
-    });
-  } else {
-    runEffects(state, dispatch);
-  }
-}
-function runEffects(_state, dispatch) {
-  const state = { ..._state };
-
-  const observable = state.observables.find(
-    (obs) => obs.id == state.effectObject?.observableId,
-  );
-
-  const operatorState = state.operatorStates.find(
-    (operator) => operator.id == observable?.operatorId,
-  );
-
-  switch (state.effectObject.type) {
-    case "UNSUBSCRIBE-EFFECT(switchAll)":
-      if (observable.unsubscribe) observable.unsubscribe();
-
-      dispatch({
-        type: "SUBSCRIPTION-CANCEL-1",
-        observableId: observable.id,
-      });
-      break;
-
-    case "SUBSCRIBE-EFFECT(switchAll)":
-      if (!["NEW", "BUFFERED"].includes(observable.observeState)) {
-        throw new Error(
-          `obervable ${JSON.stringify(
-            observable,
-          )} is not ready to be subscribed`,
-        );
-      }
-
-      dispatch({
-        type: "SUBSCRIPTION-START-1",
-        observableId: observable.id,
-        operatorId: state.effectObject.operatorId,
-      });
-
-      const subcribeReturnValue = observable.subscribe({
-        next: (value) => {
-          const operatorState = getState().operatorStates.find(
-            (operator) => operator.id == observable?.operatorId,
-          );
-
-          if (operatorState.currentObservableId === observable.id) {
-            dispatch({
-              type: "HANDLE-EMISSION",
-              observableId: observable.id,
-              emittedValue: value,
-            });
-
-            operatorState.next(value, observable);
-          }
-        },
-        complete: () => {
-          dispatch({
-            type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
-            observableId: observable.id,
-            operatorId: state.effectObject.operatorId,
-          });
-        },
-      });
-
-      if (typeof subcribeReturnValue === "function") {
-        dispatch({
-          type: "SET-UNSUBSCRIBE",
-          observableId: observable.id,
-          unsubscribe: subcribeReturnValue,
-        });
-      }
-      break;
-
-    default:
-      break;
-  }
 }

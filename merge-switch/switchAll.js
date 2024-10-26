@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import { switchAllReducer, runSwitchAllEffects } from "./switchAllReducer.js";
 import { getState, dispatch } from "./main.js";
 
 // make state read only all state reads explicit
