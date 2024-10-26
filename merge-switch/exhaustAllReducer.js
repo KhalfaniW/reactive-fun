@@ -74,7 +74,7 @@ export function exhaustAllReducer(
           }),
           effectObject: [
             {
-              type: "SUBSCRIBE-EFFECT(exhaustAll)",
+              type: "SUBSCRIBE-EFFECT",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
               createSubscriber: createSubscriberLink({
@@ -172,7 +172,7 @@ function handleObservableCompleteRM(updatedState, action) {
       ...updatedState,
 
       effectObject: {
-        type: "SUBSCRIBE-EFFECT(exhaustAll)",
+        type: "SUBSCRIBE-EFFECT",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
         createSubscriber: createSubscriberLink({

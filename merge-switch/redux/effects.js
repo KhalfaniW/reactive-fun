@@ -3,36 +3,17 @@ import { switchAllReducer } from "../switchAllReducer.js";
 import { scanReducer } from "../scanReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
 
-export function runMainEffects(state, dispatch) {
-  if (state.effectObject?.type == "COMPLETE_STATE") {
-    dispatch({ type: "ALL-COMPLETE" });
-    state.complete();
-    return;
-  }
-  if (state.effectObject?.type == "COMPLETE-OPERATOR") {
-    dispatch({
-      type: "HANDLE-OPERATOR-COMPLETE",
-      operatorId: state.effectObject.operatorId,
-    });
-    state.complete();
-    return;
-  }
-}
-
 export const runEffectsMiddleWare = (store) => (next) => (action) => {
   const resultAction = next(action);
-  const resultState = store.getState();
+  const state = store.getState();
 
-  if (resultState.effectObject) {
-    const effectRunners = [
-      runMainEffects,
-      runMergeAllEffects,
-      runExhaustEffects,
-      runSwitchEffects,
-    ];
-
-    for (const runEffects of effectRunners) {
-      runAllEffects(resultState, store.dispatch, store, runEffects);
+  if (state.effectObject) {
+    if (Array.isArray(state.effectObject)) {
+      state.effectObject.forEach((e) => {
+        runEffects({ ...state, effectObject: e }, store.dispatch, store);
+      });
+    } else {
+      runEffects(state, store.dispatch, store);
     }
   }
   return resultAction;
@@ -46,33 +27,9 @@ function validateIfSubscribable(observable) {
   }
 }
 
-export function runMergeAllEffects(state, dispatch, store) {
-  switch (state.effectObject.type) {
-    case "SUBSCRIBE-EFFECT(mergeAll)":
-      const observable = state.observables.find(
-        (obs) => obs.id == state.effectObject.observableId,
-      );
+export function runEffects(state, dispatch_, store) {
+  const dispatch = store.dispatch;
 
-      const operatorState = state.operatorStates.find(
-        (operator) => operator.id == observable.operatorId,
-      );
-
-      validateIfSubscribable(observable);
-
-      observable.subscribe(state.effectObject.createSubscriber(store));
-      dispatch({
-        type: "SUBSCRIPTION-START-1",
-        observableId: observable.id,
-        operatorId: state.effectObject.operatorId,
-      });
-      break;
-
-    default:
-      break;
-  }
-}
-
-function runExhaustEffects(state, dispatch, store) {
   const observable = state.observables.find(
     (obs) => obs.id == state.effectObject?.observableId,
   );
@@ -80,64 +37,18 @@ function runExhaustEffects(state, dispatch, store) {
   const operatorState = state.operatorStates.find(
     (operator) => operator.id == observable?.operatorId,
   );
-
   switch (state.effectObject.type) {
-    case "UNSUBSCRIBE-EFFECT(exhaustAll)":
-      if (observable.unsubscribe) observable.unsubscribe();
-
-      dispatch({
-        type: "SUBSCRIPTION-CANCEL-1",
-        observableId: observable.id,
-      });
+    case "COMPLETE_STATE":
+      dispatch({ type: "ALL-COMPLETE" });
+      state.complete();
       break;
-
-    case "SUBSCRIBE-EFFECT(exhaustAll)":
-      validateIfSubscribable(observable);
-      //state neesd to update go before actually subscribing because sometiems the observable/subscriber needs to
-      //check the currently subscribed entity for calcuations
+    case "COMPLETE-OPERATOR":
       dispatch({
-        type: "SUBSCRIPTION-START-1",
-        observableId: observable.id,
+        type: "HANDLE-OPERATOR-COMPLETE",
         operatorId: state.effectObject.operatorId,
       });
-
-      const subcribeReturnValue = observable.subscribe(
-        state.effectObject.createSubscriber(store),
-      );
-
-      if (typeof subcribeReturnValue === "function") {
-        dispatch({
-          type: "SET-UNSUBSCRIBE",
-          observableId: observable.id,
-          unsubscribe: subcribeReturnValue,
-        });
-      }
       break;
-
-    default:
-      break;
-  }
-}
-export function runAllEffects(state, dispatch, store, runEffects) {
-  if (Array.isArray(state.effectObject)) {
-    state.effectObject.forEach((e) => {
-      runEffects({ ...state, effectObject: e }, dispatch, store);
-    });
-  } else {
-    runEffects(state, dispatch, store);
-  }
-}
-function runSwitchEffects(state, dispatch, store) {
-  const observable = state.observables.find(
-    (obs) => obs.id == state.effectObject?.observableId,
-  );
-
-  const operatorState = state.operatorStates.find(
-    (operator) => operator.id == observable?.operatorId,
-  );
-
-  switch (state.effectObject.type) {
-    case "UNSUBSCRIBE-EFFECT(switchAll)":
+    case "UNSUBSCRIBE-EFFECT":
       if (observable.unsubscribe) observable.unsubscribe();
 
       dispatch({
@@ -145,10 +56,9 @@ function runSwitchEffects(state, dispatch, store) {
         observableId: observable.id,
       });
       break;
-
-    case "SUBSCRIBE-EFFECT(switchAll)":
+    case "SUBSCRIBE-EFFECT":
       validateIfSubscribable(observable);
-      //state neesd to update go before actually subscribing because sometiems the observable/subscriber needs to
+      //state needs to update go before actually subscribing because sometiems the observable/subscriber needs to
       //check the currently subscribed entity for calcuations
       dispatch({
         type: "SUBSCRIPTION-START-1",

@@ -83,7 +83,7 @@ export function mergeAllReducer(
           operatorId: action.operatorId,
         }),
         effectObject: {
-          type: "SUBSCRIBE-EFFECT(mergeAll)",
+          type: "SUBSCRIBE-EFFECT",
           observableId: action.newObservable.id,
           operatorId: action.operatorId,
           createSubscriber: createMergeSubscriberLink({
@@ -157,7 +157,7 @@ function handleObservableCompleteMerge(updatedState, action) {
     return {
       ...updatedState,
       effectObject: {
-        type: "SUBSCRIBE-EFFECT(mergeAll)",
+        type: "SUBSCRIBE-EFFECT",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
         createSubscriber: createMergeSubscriberLink({

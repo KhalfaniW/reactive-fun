@@ -72,12 +72,12 @@ export function switchAllReducer(
 
           effectObject: [
             {
-              type: "UNSUBSCRIBE-EFFECT(switchAll)",
+              type: "UNSUBSCRIBE-EFFECT",
               observableId: currentOperator.currentObservableId,
               operatorId: action.operatorId,
             },
             {
-              type: "SUBSCRIBE-EFFECT(switchAll)",
+              type: "SUBSCRIBE-EFFECT",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
               createSubscriber: createSubscriberLink({
@@ -97,7 +97,7 @@ export function switchAllReducer(
 
         effectObject: [
           {
-            type: "SUBSCRIBE-EFFECT(switchAll)",
+            type: "SUBSCRIBE-EFFECT",
             observableId: action.newObservable.id,
             operatorId: action.operatorId,
             createSubscriber: createSubscriberLink({
@@ -225,7 +225,7 @@ function handleObservableCompleteRM(updatedState, action) {
     return {
       ...updatedState,
       effectObject: {
-        type: "SUBSCRIBE-EFFECT(switchAll)",
+        type: "SUBSCRIBE-EFFECT",
         observableId: nextBufferedObservable.id,
         operatorId: action.operatorId,
       },
