@@ -214,13 +214,9 @@ function createSubscriberLink({ observableId, operatorId }) {
     const operatorState = state.operatorStates.find(
       (operator) => operator.id == observable.operatorId,
     );
-
+    const dispatch = store.dispatch;
     const subscriber = {
       next: (value) => {
-        const observable = store
-          .getState()
-          .observables.find((obs) => obs.id == observableId);
-
         const operatorState = store
           .getState()
           .operatorStates.find(
@@ -228,7 +224,7 @@ function createSubscriberLink({ observableId, operatorId }) {
           );
 
         if (operatorState.currentObservableId === observable.id) {
-          store.dispatch({
+          dispatch({
             type: "HANDLE-EMISSION",
             observableId: observable.id,
             emittedValue: value,
@@ -238,13 +234,14 @@ function createSubscriberLink({ observableId, operatorId }) {
         }
       },
       complete: () => {
-        store.dispatch({
-          type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
-          observableId: observableId,
-          operatorId: operatorId,
+        dispatch({
+          type: "HANDLE-OBSERVABLE-COMPLETE(exhaustAll)",
+          observableId: observable.id,
+          operatorId: observable?.operatorId,
         });
       },
     };
+
     return subscriber;
   };
 }
