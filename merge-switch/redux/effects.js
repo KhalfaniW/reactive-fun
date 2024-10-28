@@ -48,6 +48,14 @@ export function runEffects(state, dispatch_, store) {
         operatorId: state.effectObject.operatorId,
       });
       break;
+    case "HANDLE-EMISSION":
+      dispatch({
+        type: "HANDLE-EMISSION",
+        emittedValue: state.effectObject.value,
+      });
+      const operatorState = state.operatorStates[0];
+      operatorState.next(state.effectObject.value);
+      break;
     case "UNSUBSCRIBE-EFFECT":
       if (observable.unsubscribe) observable.unsubscribe();
 

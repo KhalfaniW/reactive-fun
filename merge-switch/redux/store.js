@@ -5,8 +5,8 @@ import {
   stateReducer,
   createSaveHistoryMiddleware,
   addDispatchContext,
-} from "./middleware";
-import { runEffectsMiddleWare } from "./effects";
+} from "./middleware.js";
+import { runEffectsMiddleWare } from "./effects.js";
 
 export function makeStoreWithExtra() {
   let allActions_ = [];

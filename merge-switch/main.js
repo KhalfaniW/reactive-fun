@@ -238,4 +238,3 @@ export function subscriptionReducer(state, action) {
   }
   return state;
 }
-

@@ -18,8 +18,8 @@ test("test concatAll using mergeAll concurrency 1", () => {
       next: (value) => {},
 
       complete: () => {
-        expect(getStateTesting()).toMatchObject(expected_EndState);
         resolve();
+        expect(getStateTesting()).toMatchObject(expected_EndState);
       },
     });
   });

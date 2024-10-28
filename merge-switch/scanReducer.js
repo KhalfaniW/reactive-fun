@@ -18,24 +18,28 @@ export function scanReducer(state, action) {
         }),
       };
     case "HANDLE-EMISSION(scan)":
+      const newValue = thisOperator.accumulator(
+        thisOperator.value,
+        action.value,
+      );
+      // console.log(thisOperator)
       return {
         ...state,
         operatorStates: state.operatorStates.map((operator) =>
           operator.id === action.operatorId
             ? {
                 ...operator,
-                value: thisOperator.accumulator(
-                  thisOperator.value,
-                  action.value,
-                ),
+                value: newValue,
               }
             : operator,
         ),
+        effectObject: {
+          type: "HANDLE-EMISSION",
+          value: newValue,
+        },
       };
 
     default:
       return state;
   }
 }
-
-

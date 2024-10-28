@@ -17,12 +17,10 @@ test("testing exhaustAll 1", () => {
       next: (value) => {},
 
       complete: () => {
-        debugger;
+        resolve();
         expect(_.omit(getStateTesting())).toMatchObject(
           expected_exhaustAll_EndState_,
         );
-
-        resolve();
       },
     });
   });

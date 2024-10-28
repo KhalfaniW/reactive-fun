@@ -8,22 +8,20 @@ const getStateTesting = () => cleanFunctions(getState());
 test("testing scan", () => {
   return new Promise((resolve, reject) => {
     var i = 0;
-    const obs2 = (subscriber) => {
-      subscriber.next(1);
-      subscriber.next(2);
+    const obs2 = ({ next, complete }) => {
+      next(1);
+      next(2);
 
       setTimeout(() => {
-        subscriber.next(3);
-        subscriber.complete();
+        next(3);
+        complete();
       }, 500);
     };
-
-    connectObservableToState(obs2)({
+    scan((sum, i) => sum + i, 0, { id: "scan_1", getState, dispatch })(obs2)({
       next: (value) => {},
       complete: () => {
-        expect(getStateTesting()).toMatchObject(expected_EndState_);
-
         resolve();
+        expect(getStateTesting()).toMatchObject(expected_EndState_);
       },
     });
   });
@@ -71,9 +69,9 @@ function cleanFunctions(programState) {
 }
 const expected_EndState_ = {
   emittedValues: [
-    { id: null, emittedValue: 1 },
-    { id: null, emittedValue: 3 },
-    { id: null, emittedValue: 6 },
+    { emittedValue: 1 },
+    { emittedValue: 3 },
+    { emittedValue: 6 },
   ],
   isCompleted: false,
   isStarted: true,

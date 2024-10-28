@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import _ from "lodash";
-import {  dispatch, getState } from "./main.js";
-import { switchAll,  } from "./switchAll.js";
+import { dispatch, getState } from "./main.js";
+import { switchAll } from "./switchAll.js";
 import fs from "fs";
 const switchAllSubscriberId = nanoid().slice(0, 5);
 const getStateTesting = () => cleanFunctions(getState());
@@ -17,11 +17,10 @@ test("testing switchAll 1", () => {
       next: (value) => {},
 
       complete: () => {
+        resolve();
         expect(_.omit(getStateTesting())).toMatchObject(
           expected_concatAll_EndState_,
         );
-
-        resolve();
       },
     });
   });
@@ -49,7 +48,7 @@ function connectObservableToState(
     mainState = getState(),
   ) => {
     const finalNextWithDebugging = (emission, originObservable) => {
-       finalNext(emission);
+      finalNext(emission);
     };
     if (!mainState?.isStarted) {
       dispatch({
