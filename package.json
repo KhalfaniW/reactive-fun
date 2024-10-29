@@ -24,7 +24,7 @@
     "redux": "^5.0.1"
   },
   "jest": {
-    "testTimeout": 2500
+    "testTimeout": 600
   },
   "devDependencies": {
     "rxjs": "^7.8.1"

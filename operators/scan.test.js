@@ -1,29 +1,29 @@
-import { nanoid } from "nanoid";
+import { Observable } from "rxjs";
 import _ from "lodash";
-
+import { scan } from "./scan.js";
 import { makeStoreWithExtra } from "./redux/store.js";
 
 const storeWithExtra = makeStoreWithExtra();
 export const getState = storeWithExtra.getState;
 export const dispatch = storeWithExtra.dispatch;
 
-import { scan } from "./scan.js";
-
 const getStateTesting = () => cleanFunctions(getState());
 
 test("testing scan", () => {
   return new Promise((resolve, reject) => {
     var i = 0;
-    const obs2 = ({ next, complete }) => {
-      next(1);
-      next(2);
+    const obs2 = new Observable((subscriber) => {
+      subscriber.next(1);
+      subscriber.next(2);
 
       setTimeout(() => {
-        next(3);
-        complete();
+        subscriber.next(3);
+        subscriber.complete();
       }, 500);
-    };
-    scan((sum, i) => sum + i, 0, { id: "scan_1", getState, dispatch })(obs2)({
+    });
+    scan((sum, i) => sum + i, 0, { id: "scan_1", getState, dispatch })(
+      obs2,
+    ).subscribe({
       next: (value) => {},
       complete: () => {
         resolve();

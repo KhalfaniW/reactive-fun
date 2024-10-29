@@ -1,85 +1,74 @@
-import { nanoid } from "nanoid";
+import { Observable } from "rxjs";
 import _ from "lodash";
 import { dispatch, getState } from "./main-store.js";
 import { exhaustAll } from "./exhaustAll.js";
-import fs from "fs";
-const exhaustAllSubscriberId = nanoid().slice(0, 5);
+
 const getStateTesting = () => cleanFunctions(getState());
 
 test("testing exhaustAll 1", () => {
   return new Promise((resolve, reject) => {
-    var i = 0;
-
-    exhaustAll({
-      getState,
-      dispatch,
-    })(higherOrderObservable)({
-      next: (value) => {},
-      complete: () => {
-        resolve();
-        expect(_.omit(getStateTesting())).toMatchObject(
-          expected_exhaustAll_EndState_,
-        );
-      },
-    });
-
+    getHigherOrderObservable()
+      .pipe(
+        exhaustAll({
+          getState,
+          dispatch,
+        }),
+      )
+      .subscribe({
+        complete: () => {
+          resolve();
+          expect(getStateTesting()).toMatchObject(
+            expected_exhaustAll_EndState_,
+          );
+        },
+      });
   });
 });
 
 function getObservables() {
-  const obs1 = ({
-    next,
-    complete,
-    simlatedRun = (next, complete) => {
-      //simulate the effects that would be sent
-      next(1);
-      setTimeout(() => {
-        next(2);
-      }, 1);
+  const obs1 = new Observable((subscriber) => {
+    subscriber.next(1);
+    setTimeout(() => subscriber.next(2), 1);
+    setTimeout(() => {
+      subscriber.next(3);
+      subscriber.complete();
+    }, 10);
+  });
 
-      setTimeout(() => {
-        next(3);
-        complete();
-      }, 10);
-    },
-  }) => {
-    simlatedRun(next, complete);
-    const unsubscribe = () => {};
-    return unsubscribe;
-  };
-
-  const obs2 = (subscriber) => {
+  const obs2 = new Observable((subscriber) => {
     subscriber.next(4);
     subscriber.next(5);
-
     const timerRef = setTimeout(() => {
       subscriber.next(6);
       subscriber.complete();
     }, 50000);
 
-  
-  };
-  const obs3 = (subscriber) => {
-    subscriber.next(8);
+    // Cleanup logic on unsubscribe
+    return () => clearTimeout(timerRef);
+  });
 
+  const obs3 = new Observable((subscriber) => {
+    subscriber.next(8);
     setTimeout(() => {
       subscriber.next(9);
       subscriber.complete();
     }, 50);
-  };
+  });
 
   return [obs1, obs2, obs3];
 }
-function higherOrderObservable({ next, complete }) {
-  const [obs1, obs2, obs3] = getObservables();
-  next(obs1);
-  setTimeout(() => {
-    next(obs2);
-  }, 5);
-  setTimeout(() => {
-    next(obs3);
-    complete();
-  }, 120);
+
+function getHigherOrderObservable() {
+  return new Observable((subscriber) => {
+    const [obs1, obs2, obs3] = getObservables();
+
+    subscriber.next(obs1);
+    setTimeout(() => subscriber.next(obs2), 5);
+    setTimeout(() => {
+      subscriber.next(obs3);
+      subscriber.complete();
+    }, 120);
+  });
 }
 
 function cleanFunctions(programState) {

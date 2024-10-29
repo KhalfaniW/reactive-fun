@@ -1,3 +1,5 @@
+import { Observable, isObservable } from "rxjs";
+
 export function createOperator({
   type,
   getState,
@@ -6,10 +8,11 @@ export function createOperator({
   initOperatorAction,
 } = {}) {
   return (observable) => {
-    const newObservable = ({
-      next: originalNext,
-      complete: originalComplete,
-    }) => {
+    const newObservable = new Observable((originalSubscriber) => {
+      const originalNext = (...params) => originalSubscriber.next(...params);
+      const originalComplete = (...params) =>
+        originalSubscriber.complete(...params);
+
       if (!getState()?.isStarted) {
         dispatch({
           type: "INIT",
@@ -22,30 +25,29 @@ export function createOperator({
       const newComplete = () => {
         const operatorName = getState().operatorStates[0].type;
         dispatch({
-          type: 'PARENT-COMPLETE',
+          type: "PARENT-COMPLETE",
         });
       };
 
       if (isOperatorStateNotInitizlized) {
         dispatch({ ...initOperatorAction, next: originalNext });
       }
-      observable({
+      observable.subscribe({
         next: newNext,
         complete: newComplete,
       });
-    };
+    });
 
     return newObservable;
   };
 }
 
 export function prepareObservable({ emission, id }) {
-  const isNotAnObservable = typeof emission !== "function";
-  if (isNotAnObservable) {
+  if (!isObservable(emission)) {
     throw new Error(`non observable ,${emission} sent to exhaustAll `);
   }
   const preparedExhaustObservable = {
-    subscribe: emission,
+    subscribe: (...params) => emission.subscribe(...params),
     observeState: "NEW",
     id,
   };

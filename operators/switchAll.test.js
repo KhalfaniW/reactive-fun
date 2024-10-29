@@ -1,78 +1,68 @@
-import { nanoid } from "nanoid";
+import { Observable } from "rxjs";
 import _ from "lodash";
 import { dispatch, getState } from "./main-store.js";
 import { switchAll } from "./switchAll.js";
-import fs from "fs";
-const switchAllSubscriberId = nanoid().slice(0, 5);
+
 const getStateTesting = () => cleanFunctions(getState());
 
 test("testing switchAll 1", () => {
   return new Promise((resolve, reject) => {
     var i = 0;
 
-    switchAll({
-      getState,
-      dispatch,
-    })(higherOrderObservable)({
-      next: (value) => {},
-      complete: () => {
-        resolve();
-        expect(_.omit(getStateTesting())).toMatchObject(
-          expected_switchAll_EndState_,
-        );
-      },
-    });
+    getHigherOrderObservable()
+      .pipe(
+        switchAll({
+          getState,
+          dispatch,
+        }),
+      )
+      .subscribe({
+        complete: () => {
+          resolve();
+          expect(getStateTesting()).toMatchObject(expected_switchAll_EndState_);
+        },
+      });
   });
 });
-
+function getHigherOrderObservable() {
+  return new Observable((subscriber) => {
+    const [obs1, obs2, obs3] = getObservables();
+    subscriber.next(obs1);
+    subscriber.next(obs2);
+    subscriber.next(obs3);
+    subscriber.complete();
+  });
+}
 function getObservables() {
-  const obs1 = ({
-    next,
-    complete,
-    simlatedRun = (next, complete) => {
-      //simulate the effects that would be sent
-      next(1);
-      setTimeout(() => {
-        next(2);
-      }, 1);
+  const obs1 = new Observable((subscriber) => {
+    subscriber.next(1);
+    setTimeout(() => {
+      subscriber.next(2);
+    }, 1);
+    setTimeout(() => {
+      subscriber.next(3);
+      subscriber.complete();
+    }, 100);
+  });
 
-      setTimeout(() => {
-        next(3);
-        complete();
-      }, 100);
-    },
-  }) => {
-    simlatedRun(next, complete);
-    const unsubscribe = () => {};
-    return unsubscribe;
-  };
-  const obs2 = (subscriber) => {
+  const obs2 = new Observable((subscriber) => {
     subscriber.next(4);
     subscriber.next(5);
-
     setTimeout(() => {
       subscriber.next(6);
       subscriber.complete();
     }, 50);
-  };
-  const obs3 = (subscriber) => {
+  });
+
+  const obs3 = new Observable((subscriber) => {
     subscriber.next(8);
     subscriber.next(9);
-
     setTimeout(() => {
       subscriber.complete();
     }, 5);
-  };
+  });
 
   return [obs1, obs2, obs3];
-}
-function higherOrderObservable({ next, complete }) {
-  const [obs1, obs2, obs3] = getObservables();
-  next(obs1);
-  next(obs2);
-  next(obs3);
-
-  complete();
 }
 
 function cleanFunctions(programState) {
@@ -99,4 +89,3 @@ const expected_switchAll_EndState_ = {
   ],
   operatorStates: [{ type: "switchAll", isCompleted: true }],
 };
- 
