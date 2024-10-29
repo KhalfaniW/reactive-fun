@@ -42,6 +42,9 @@ export function runEffects(state, dispatch_, store) {
       dispatch({ type: "ALL-COMPLETE" });
       state.complete();
       break;
+    case "EMIT":
+      state.effectObject.next(state.effectObject.emittedValue);
+      break;
     case "COMPLETE-OPERATOR":
       dispatch({
         type: "HANDLE-OPERATOR-COMPLETE",
@@ -49,16 +52,15 @@ export function runEffects(state, dispatch_, store) {
       });
       break;
     case "HANDLE-EMISSION":
+      // operators like filter do not create an effect on this needs to 
       dispatch({
         type: "HANDLE-EMISSION",
-        emittedValue: state.effectObject.value,
+          emittedValue: state.effectObject.value,
+          next:  state.effectObject.next,
       });
-      const operatorState = state.operatorStates[0];
-      operatorState.next(state.effectObject.value);
       break;
     case "UNSUBSCRIBE-EFFECT":
       if (observable.unsubscribe) observable.unsubscribe();
-
       dispatch({
         type: "SUBSCRIPTION-CANCEL-1",
         observableId: observable.id,

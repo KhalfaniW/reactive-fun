@@ -24,43 +24,4 @@ export function scan(
   });
 }
 
-export function scan1(
-  accumulator,
-  firstValue = undefined,
-  { id, getState, dispatch },
-) {
-  return (observable) => {
-    const newObservable = ({
-      next: originalNext,
-      complete: originalComplete,
-    }) => {
-      if (!getState()?.isStarted) {
-        dispatch({
-          type: "INIT",
-          complete: originalComplete,
-          observables: [],
-        });
-      }
-      const isOperatorStateNotInitizlized = !getState().operatorStates.some(
-        (operator) => operator.id === id,
-      );
 
-      const newComplete = () => {};
-      const newNext = (emission) => {
-        const thisOperator = getState().operatorStates.find(
-          (operator) => operator.id === id,
-        );
-      };
-      if (isOperatorStateNotInitizlized) {
-        dispatch({ next: originalNext });
-      }
-      //subscribe to innner
-      observable({
-        next: newNext,
-        complete: originalComplete,
-      });
-    };
-
-    return newObservable;
-  };
-}

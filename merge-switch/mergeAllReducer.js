@@ -118,9 +118,8 @@ function createMergeSubscriberLink({ observableId, operatorId }) {
           type: "HANDLE-EMISSION",
           observableId: observable.id,
           emittedValue: value,
+          next: operatorState.next,
         });
-
-        operatorState.next(value, observable);
       },
       complete: () => {
         store.dispatch({

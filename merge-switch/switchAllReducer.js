@@ -184,11 +184,10 @@ function createSubscriberLink({ observableId, operatorId }) {
             type: "HANDLE-EMISSION",
             observableId: observable.id,
             emittedValue: value,
+            next: operatorState.next,
           });
-
-          operatorState.next(value, observable);
         }
-      },
+      }, 
       complete: () => {
         store.dispatch({
           type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",

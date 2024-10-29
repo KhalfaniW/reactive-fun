@@ -187,15 +187,12 @@ function createSubscriberLink({ observableId, operatorId }) {
     const dispatch = store.dispatch;
     const subscriber = {
       next: (value) => {
-        const operatorState = store.getState().operatorStates[0];
-
         dispatch({
           type: "HANDLE-EMISSION",
           observableId: observable.id,
           emittedValue: value,
+          next: operatorState.next,
         });
-
-        operatorState.next(value, observable);
       },
       complete: () => {
         dispatch({

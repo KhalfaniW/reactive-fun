@@ -43,6 +43,11 @@ export function mainReducer(
           id: action.observableId,
           emittedValue: action.emittedValue,
         }),
+        effectObject: {
+          type: "EMIT",
+          next: action.next,
+          emittedValue: action.emittedValue,
+        },
       };
 
     case "HANDLE-OPERATOR-COMPLETE":

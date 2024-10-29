@@ -31,7 +31,6 @@ export function scanReducer(state, action) {
         thisOperator.value,
         action.value,
       );
-      // console.log(thisOperator)
       return {
         ...state,
         operatorStates: state.operatorStates.map((operator) =>
@@ -45,6 +44,7 @@ export function scanReducer(state, action) {
         effectObject: {
           type: "HANDLE-EMISSION",
           value: newValue,
+          next: state.operatorStates[0].next,
         },
       };
 
