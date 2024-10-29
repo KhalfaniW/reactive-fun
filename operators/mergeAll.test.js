@@ -1,8 +1,10 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
-import { dispatch, getState } from "./main-store.js";
-import { mergeAll } from "./mergeAll.js";
 
+import { mergeAll } from "./mergeAll.js";
+import { makeStoreWithExtra } from "./redux/store.js";
+
+const { getState, dispatch } = makeStoreWithExtra();
 const getStateTesting = () => cleanFunctions(getState());
 
 test("concatAll using mergeAll concurrency 1", () => {
