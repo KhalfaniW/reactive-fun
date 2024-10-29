@@ -1,6 +1,6 @@
 import { mergeAllReducer } from "../mergeAllReducer.js";
 import { switchAllReducer } from "../switchAllReducer.js";
-import { scanReducer } from "../scanReducer.js";
+
 import { mainReducer, subscriptionReducer } from "../main.js";
 
 export const runEffectsMiddleWare = (store) => (next) => (action) => {

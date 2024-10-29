@@ -3,6 +3,8 @@ import { mergeAllReducer } from "../mergeAllReducer.js";
 import { switchAllReducer } from "../switchAllReducer.js";
 import { exhaustAllReducer } from "../exhaustAllReducer.js";
 import { scanReducer } from "../scanReducer.js";
+
+import { mapReducer } from "../mapReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
 
 export const asyncDispatchMiddleware = (store) => (next) => (action) => {
@@ -39,6 +41,7 @@ export const stateReducer = (initialState, action) =>
     mergeAllReducer,
     scanReducer,
     switchAllReducer,
+      mapReducer,
     exhaustAllReducer,
   ].reduce(
     (currentState, reducer) => reducer(currentState, action),
