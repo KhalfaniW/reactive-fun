@@ -1,18 +1,3 @@
-import { mainReducer, getState } from "./main.js";
-
-/**
- * @param {{ list: any[], selector: (element: any) => boolean, stateChange: object }} params
- * @param {any[]} params.list
- * @param {(element: any) => boolean} params.selector
- * @param {object} params.stateChange
- * @returns {any[]}
- */
-const updateMatchingElements = ({ list, selector, stateChange }) => {
-  return list.map((element) =>
-    selector(element) ? { ...element, ...stateChange } : element,
-  );
-};
-
 /**
  * @typedef {Object} StateObject
  * @property {boolean} hasCompleted - Indicates whether the process has been completed.
@@ -35,22 +20,7 @@ export function exhaustAllReducer(
   },
   action,
 ) {
-  const updateActionObservable = (stateChange) => {
-    return updateMatchingElements({
-      list: state.observables,
-      selector: (observable) => observable.id === action.observableId,
-      stateChange: stateChange,
-    });
-  };
-  const thisOperator = state.operatorStates?.find(
-    (operator) => operator.id === action.operatorId,
-  );
-
-  // TODO handle parent completing event when there is no action obervable
-  const isEverythingFinished =
-    state.isParentComplete &&
-    thisOperator?.currentObservableId &&
-    thisOperator?.currentObservableId === action.observableId;
+  const thisOperator = state.operatorStates && state.operatorStates[0];
 
   switch (action.type) {
     case "INIT(exhaustAll)":
@@ -65,7 +35,8 @@ export function exhaustAllReducer(
         }),
       };
     case "HANDLE-NEW-OBSERVABLE(exhaustAll)":
-      if (!thisOperator.currentObservableId) {
+      const noCurrentSubscription = thisOperator.currentObservableId === null;
+      if (noCurrentSubscription) {
         return {
           ...state,
           observables: state.observables.concat({
@@ -115,7 +86,7 @@ export function exhaustAllReducer(
       };
 
     case "PARENT-COMPLETE":
-      if (isEverythingFinished) {
+      if (thisOperator.currentObservableId === null) {
         return {
           ...state,
           effectObject: {
@@ -132,7 +103,7 @@ export function exhaustAllReducer(
         type: "OBSERVABLE-COMPLETE(exhaustAll)",
       });
 
-      if (isEverythingFinished) {
+      if (state.isParentComplete) {
         return {
           ...updatedState,
           effectObject: {
@@ -141,7 +112,6 @@ export function exhaustAllReducer(
           },
         };
       }
-
       return updatedState;
 
     default:
@@ -217,21 +187,15 @@ function createSubscriberLink({ observableId, operatorId }) {
     const dispatch = store.dispatch;
     const subscriber = {
       next: (value) => {
-        const operatorState = store
-          .getState()
-          .operatorStates.find(
-            (operator) => operator.id == observable?.operatorId,
-          );
+        const operatorState = store.getState().operatorStates[0];
 
-        if (operatorState.currentObservableId === observable.id) {
-          dispatch({
-            type: "HANDLE-EMISSION",
-            observableId: observable.id,
-            emittedValue: value,
-          });
+        dispatch({
+          type: "HANDLE-EMISSION",
+          observableId: observable.id,
+          emittedValue: value,
+        });
 
-          operatorState.next(value, observable);
-        }
+        operatorState.next(value, observable);
       },
       complete: () => {
         dispatch({

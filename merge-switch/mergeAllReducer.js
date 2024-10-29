@@ -40,7 +40,7 @@ export function mergeAllReducer(
       stateChange: stateChange,
     });
   };
-
+  const thisOperator = state.operatorStates && state.operatorStates[0];
   switch (action.type) {
     case "INIT(mergeAll)":
       return {
@@ -56,14 +56,8 @@ export function mergeAllReducer(
 
     case "HANDLE-NEW-OBSERVABLE(mergeAll)":
       const activeCountForOperator = state.observables.filter(
-        (observable) =>
-          observable.operatorId === action.operatorId &&
-          observable.observeState === "RUNNING",
+        (observable) => observable.observeState === "RUNNING",
       ).length;
-
-      const thisOperator = state.operatorStates.find(
-        (operator) => operator.id === action.operatorId,
-      );
 
       if (activeCountForOperator === thisOperator.concurrentLimit) {
         return {
@@ -117,11 +111,15 @@ function createMergeSubscriberLink({ observableId, operatorId }) {
   return (store) => {
     const state = store.getState();
     const observable = state.observables.find((obs) => obs.id == observableId);
-    const operatorState = state.operatorStates.find(
-      (operator) => operator.id == observable.operatorId,
-    );
+    const operatorState = state.operatorStates[0];
     return {
       next: (value) => {
+        store.dispatch({
+          type: "HANDLE-EMISSION",
+          observableId: observable.id,
+          emittedValue: value,
+        });
+
         operatorState.next(value, observable);
       },
       complete: () => {

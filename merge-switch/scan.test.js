@@ -1,6 +1,12 @@
 import { nanoid } from "nanoid";
 import _ from "lodash";
-import { dispatch, getState } from "./main.js";
+
+import { makeStoreWithExtra } from "./redux/store.js";
+
+const storeWithExtra = makeStoreWithExtra();
+export const getState = storeWithExtra.getState;
+export const dispatch = storeWithExtra.dispatch;
+
 import { scan } from "./scan.js";
 
 const getStateTesting = () => cleanFunctions(getState());
@@ -27,39 +33,6 @@ test("testing scan", () => {
   });
 });
 
-function connectObservableToState(observable) {
-  return (
-    { next: finalNext = () => {}, complete: finalComplete = () => {} },
-    mainState = getState(),
-  ) => {
-    const finalNextWithState = (emission, originObservable) => {
-      finalNext(emission);
-      dispatch({
-        type: "HANDLE-EMISSION",
-        observableId: null,
-        emittedValue: emission,
-      });
-    };
-    if (!mainState?.isStarted) {
-      dispatch({
-        type: "INIT",
-        complete: finalComplete,
-        observables: [],
-      });
-    }
-
-    observable({
-      next: (value) => {
-        scan((accumulator, value) => accumulator + value, 0, { id: "scan_1" })(
-          value,
-          finalNextWithState,
-        );
-      },
-      complete: finalComplete,
-    });
-  };
-}
-
 function cleanFunctions(programState) {
   return _.cloneDeepWith(programState, (value) => {
     if (_.isFunction(value)) {
@@ -73,8 +46,9 @@ const expected_EndState_ = {
     { emittedValue: 3 },
     { emittedValue: 6 },
   ],
-  isCompleted: false,
+  isCompleted: true,
   isStarted: true,
+  isParentComplete: true,
   effectObject: null,
   operatorStates: [{ type: "scan", id: "scan_1", value: 6 }],
   complete: "[Function]",

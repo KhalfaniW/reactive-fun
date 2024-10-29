@@ -1,25 +1,22 @@
 import { nanoid } from "nanoid";
 import _ from "lodash";
 import { dispatch, getState } from "./main-store.js";
-import { switchAll } from "./switchAll.js";
+import { mergeAll } from "./mergeAll.js";
 import fs from "fs";
-const switchAllSubscriberId = nanoid().slice(0, 5);
+const mergeAllSubscriberId = nanoid().slice(0, 5);
+
 const getStateTesting = () => cleanFunctions(getState());
 
-test("testing switchAll 1", () => {
+test(" mergeAll concurrency 2", () => {
   return new Promise((resolve, reject) => {
-    var i = 0;
-
-    switchAll({
-      getState,
-      dispatch,
-    })(higherOrderObservable)({
+    mergeAll(
+      { concurrentLimit: 2 },
+      { getState, dispatch },
+    )(higherOrderObservable)({
       next: (value) => {},
       complete: () => {
         resolve();
-        expect(_.omit(getStateTesting())).toMatchObject(
-          expected_switchAll_EndState_,
-        );
+        expect(getStateTesting()).toMatchObject(expected_mergeAll_EndState);
       },
     });
   });
@@ -61,7 +58,7 @@ function getObservables() {
 
     setTimeout(() => {
       subscriber.complete();
-    }, 5);
+    }, 20);
   };
 
   return [obs1, obs2, obs3];
@@ -83,20 +80,31 @@ function cleanFunctions(programState) {
   });
 }
 
-const expected_switchAll_EndState_ = {
+const expected_mergeAll_EndState = {
   emittedValues: [
     { id: "obs_0", emittedValue: 1 },
     { id: "obs_1", emittedValue: 4 },
     { id: "obs_1", emittedValue: 5 },
+    { id: "obs_0", emittedValue: 2 },
+    { id: "obs_1", emittedValue: 6 },
     { id: "obs_2", emittedValue: 8 },
     { id: "obs_2", emittedValue: 9 },
+    { id: "obs_0", emittedValue: 3 },
   ],
   isCompleted: true,
+  isStarted: true,
+  effectObject: null,
   observables: [
-    { id: "obs_0", observeState: "UNSUBSCRIBED" },
-    { id: "obs_1", observeState: "UNSUBSCRIBED" },
-    { id: "obs_2", observeState: "COMPLETED" },
+    { subscribe: "[Function]", id: "obs_0", observeState: "COMPLETED" },
+    { subscribe: "[Function]", id: "obs_1", observeState: "COMPLETED" },
+    { subscribe: "[Function]", id: "obs_2", observeState: "COMPLETED" },
   ],
-  operatorStates: [{ type: "switchAll", isCompleted: true }],
+  operatorStates: [
+    {
+      type: "mergeAll",
+      isCompleted: true,
+      next: "[Function]",
+      concurrentLimit: 2 ,
+    },
+  ],
 };
- 

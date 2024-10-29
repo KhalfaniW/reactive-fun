@@ -1,14 +1,4 @@
 import { combineReducers, createStore, applyMiddleware } from "redux";
-import { makeStoreWithExtra } from "./redux/store.js";
-
-const storeWithExtra = makeStoreWithExtra();
-export const getState = storeWithExtra.getState;
-export const dispatch = storeWithExtra.dispatch;
-
-globalThis.getStateForDebugging = () => ({
-  ...getState(),
-  debug: storeWithExtra.debug,
-});
 
 // TODO refactor to have observables and state be more like observable struct with state in the statemachine
 // maybe make subcription details serialiable
@@ -77,19 +67,13 @@ export function mainReducer(
         operatorStates: operatorStatesWithThisCompleted,
       };
 
-      const isAllOperatorsCompleted = updatedState.operatorStates.every(
-        (operator) => operator.isCompleted,
-      );
+      return {
+        ...updatedState,
+        effectObject: {
+          type: "COMPLETE_STATE",
+        },
+      };
 
-      if (isAllOperatorsCompleted) {
-        return {
-          ...updatedState,
-          effectObject: {
-            type: "COMPLETE_STATE",
-          },
-        };
-      }
-      return state;
     case "PARENT-COMPLETE":
       return {
         ...state,

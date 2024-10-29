@@ -1,9 +1,5 @@
-import { mainReducer, getState } from "./main.js";
-
 export function scanReducer(state, action) {
-  const thisOperator = state.operatorStates?.find(
-    (operator) => operator.id === action.operatorId,
-  );
+  const thisOperator = state.operatorStates && state.operatorStates[0];
 
   switch (action.type) {
     case "INIT(scan)":
@@ -17,6 +13,19 @@ export function scanReducer(state, action) {
           next: action.next,
         }),
       };
+    case "PARENT-COMPLETE":
+      if (thisOperator.type === "scan") {
+        return {
+          ...state,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
+      } else {
+        return state;
+      }
+
     case "HANDLE-EMISSION(scan)":
       const newValue = thisOperator.accumulator(
         thisOperator.value,

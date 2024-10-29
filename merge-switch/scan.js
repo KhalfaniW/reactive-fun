@@ -1,4 +1,30 @@
+import { createOperator, prepareObservable } from "./createOperator.js";
+
 export function scan(
+  accumulator,
+  firstValue = null,
+  { id, getState, dispatch } = {},
+) {
+  return createOperator({
+    newNext: (emission) => {
+      dispatch({
+        type: "HANDLE-EMISSION(scan)",
+        operatorId: id,
+        value: emission,
+      });
+    },
+    initOperatorAction: {
+      type: "INIT(scan)",
+      operatorId: id,
+      initialValue: firstValue,
+      accumulator,
+    },
+    getState,
+    dispatch,
+  });
+}
+
+export function scan1(
   accumulator,
   firstValue = undefined,
   { id, getState, dispatch },
@@ -21,27 +47,14 @@ export function scan(
 
       const newComplete = () => {};
       const newNext = (emission) => {
-        dispatch({
-          type: "HANDLE-EMISSION(scan)",
-          operatorId: id,
-          value: emission,
-        });
-
         const thisOperator = getState().operatorStates.find(
           (operator) => operator.id === id,
         );
-
       };
       if (isOperatorStateNotInitizlized) {
-        dispatch({
-          type: "INIT(scan)",
-          operatorId: id,
-          initialValue: firstValue,
-          accumulator,
-          next: originalNext,
-        });
+        dispatch({ next: originalNext });
       }
-      //subscribe to indner
+      //subscribe to innner
       observable({
         next: newNext,
         complete: originalComplete,

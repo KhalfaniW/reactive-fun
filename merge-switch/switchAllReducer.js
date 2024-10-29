@@ -1,5 +1,3 @@
-import { mainReducer, getState } from "./main.js";
-
 /**
  * @param {{ list: any[], selector: (element: any) => boolean, stateChange: object }} params
  * @param {any[]} params.list
