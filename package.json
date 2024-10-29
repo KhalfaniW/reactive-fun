@@ -6,15 +6,17 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test-watch ": "JEST_HIDE_USAGE=1 npm test --- --watch ",
+    "test-watch": "JEST_HIDE_USAGE=1 npm test --- --watch ",
     "format": "prettier --write '**/*.js*'",
-    "debug": "node inspect --experimental-vm-modules   node_modules/jest/bin/jest.js  --runInBand  --no-silent"
+    "debug": "node inspect --experimental-vm-modules   node_modules/jest/bin/jest.js  --runInBand  --no-silent",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "async-csp": "^0.5.0",
+    "husky": "^9.1.6",
     "immer": "^10.1.1",
     "jest": "^29.7.0",
     "lodash": "^4.17.21",
