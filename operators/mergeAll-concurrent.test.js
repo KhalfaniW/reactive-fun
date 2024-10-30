@@ -1,22 +1,20 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
-import { dispatch, getState } from "./main-store.js";
-import { mergeAll } from "./mergeAll.js";
 
+import { mergeAll } from "./mergeAll.js";
 
 const getStateTesting = () => cleanFunctions(getState());
 
-test(" mergeAll concurrency 2", () => {
-  return new Promise((resolve, reject) => {
-    mergeAll(
-      { concurrentLimit: 2 },
-      { getState, dispatch },
-    )(getHigherOrderObservable()).subscribe({
-      complete: () => {
-        resolve();
-        expect(getStateTesting()).toMatchObject(expected_mergeAll_EndState);
-      },
-    });
+test(" mergeAll concurrency 2", (done) => {
+  mergeAll({ concurrentLimit: 2 })(getHigherOrderObservable()).subscribe({
+    complete: ({ getState }) => {
+      try {
+        expect(cleanFunctions(getState())).toMatchObject(endState);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    },
   });
 });
 
@@ -69,7 +67,7 @@ function cleanFunctions(programState) {
   });
 }
 
-const expected_mergeAll_EndState = {
+const endState = {
   emittedValues: [
     { id: "obs_0", emittedValue: 1 },
     { id: "obs_1", emittedValue: 4 },

@@ -1,28 +1,21 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
-import { dispatch, getState } from "./main-store.js";
+
 import { exhaustAll } from "./exhaustAll.js";
 
-const getStateTesting = () => cleanFunctions(getState());
-
-test("testing exhaustAll 1", () => {
-  return new Promise((resolve, reject) => {
-    getHigherOrderObservable()
-      .pipe(
-        exhaustAll({
-          getState,
-          dispatch,
-        }),
-      )
-      .subscribe({
-        complete: () => {
-          resolve();
-          expect(getStateTesting()).toMatchObject(
-            expected_exhaustAll_EndState_,
-          );
-        },
-      });
-  });
+test("testing exhaustAll 1", (done) => {
+  getHigherOrderObservable()
+    .pipe(exhaustAll())
+    .subscribe({
+      complete: ({ getState }) => {
+        try {
+          expect(cleanFunctions(getState())).toMatchObject(endState);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      },
+    });
 });
 
 function getObservables() {
@@ -78,7 +71,7 @@ function cleanFunctions(programState) {
     }
   });
 }
-const expected_exhaustAll_EndState_ = {
+const endState = {
   emittedValues: [
     { id: 0, emittedValue: 1 },
     { id: 0, emittedValue: 2 },

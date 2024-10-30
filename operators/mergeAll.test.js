@@ -7,18 +7,20 @@ import { makeStoreWithExtra } from "./redux/store.js";
 const { getState, dispatch } = makeStoreWithExtra();
 const getStateTesting = () => cleanFunctions(getState());
 
-test("concatAll using mergeAll concurrency 1", () => {
-  return new Promise((resolve, reject) => {
-    getHigherOrderObservable()
-      .pipe(mergeAll({ concurrentLimit: 1 }, { getState, dispatch }))
-      .subscribe({
-        next: (value) => {},
-        complete: () => {
-          resolve();
-          expect(getStateTesting()).toMatchObject(expected_concatAll_EndState);
-        },
-      });
-  });
+test("concatAll using mergeAll concurrency 1", (done) => {
+  getHigherOrderObservable()
+    .pipe(mergeAll({ concurrentLimit: 1 }))
+    .subscribe({
+      next: (value) => {},
+      complete: ({ getState }) => {
+        try {
+          expect(cleanFunctions(getState())).toMatchObject(endState);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      },
+    });
 });
 
 function getObservables() {
@@ -70,7 +72,7 @@ function cleanFunctions(programState) {
   });
 }
 
-const expected_concatAll_EndState = {
+const endState = {
   emittedValues: [
     { id: "obs_0", emittedValue: 1 },
     { id: "obs_0", emittedValue: 2 },

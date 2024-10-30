@@ -1,28 +1,21 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
-import { dispatch, getState } from "./main-store.js";
+
 import { switchAll } from "./switchAll.js";
 
-const getStateTesting = () => cleanFunctions(getState());
-
-test("testing switchAll 1", () => {
-  return new Promise((resolve, reject) => {
-    var i = 0;
-
-    getHigherOrderObservable()
-      .pipe(
-        switchAll({
-          getState,
-          dispatch,
-        }),
-      )
-      .subscribe({
-        complete: () => {
-          resolve();
-          expect(getStateTesting()).toMatchObject(expected_switchAll_EndState_);
-        },
-      });
-  });
+test("testing switchAll 1", (done) => {
+  getHigherOrderObservable()
+    .pipe(switchAll())
+    .subscribe({
+      complete: ({ getState }) => {
+        try {
+          expect(cleanFunctions(getState())).toMatchObject(endState);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      },
+    });
 });
 function getHigherOrderObservable() {
   return new Observable((subscriber) => {
@@ -73,7 +66,7 @@ function cleanFunctions(programState) {
   });
 }
 
-const expected_switchAll_EndState_ = {
+const endState = {
   emittedValues: [
     { id: "obs_0", emittedValue: 1 },
     { id: "obs_1", emittedValue: 4 },

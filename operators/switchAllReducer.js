@@ -187,7 +187,7 @@ function createSubscriberLink({ observableId, operatorId }) {
             next: operatorState.next,
           });
         }
-      }, 
+      },
       complete: () => {
         store.dispatch({
           type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",

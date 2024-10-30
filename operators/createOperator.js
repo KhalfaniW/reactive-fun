@@ -1,17 +1,28 @@
 import { Observable, isObservable } from "rxjs";
+import { makeStoreWithExtra } from "./redux/store.js";
 
-export function createOperator({
-  type,
-  getState,
-  dispatch,
-  newNext,
-  initOperatorAction,
-} = {}) {
+export function createOperator({ type, newNext, initOperatorAction } = {}) {
   return (observable) => {
     const newObservable = new Observable((originalSubscriber) => {
-      const originalNext = (...params) => originalSubscriber.next(...params);
-      const originalComplete = (...params) =>
-        originalSubscriber.complete(...params);
+      const storeWithExtra = makeStoreWithExtra();
+      const getState = storeWithExtra.getState;
+      const dispatch = storeWithExtra.dispatch;
+      originalSubscriber.store = storeWithExtra;
+
+      const originalNext = (...params) => {
+        originalSubscriber.next(...params);
+      };
+      const originalComplete = () => {
+        //TODO replace tests with custom tap opertor
+        const originalFinalCompleteFunctionReference =
+          originalSubscriber.destination.partialObserver.complete;
+        //getting the state onComplete is helpful for testing
+        originalSubscriber.destination.partialObserver.complete = () => {
+          originalFinalCompleteFunctionReference({ getState, dispatch });
+        };
+
+        originalSubscriber.complete();
+      };
 
       if (!getState()?.isStarted) {
         dispatch({
@@ -32,10 +43,12 @@ export function createOperator({
       if (isOperatorStateNotInitizlized) {
         dispatch({ ...initOperatorAction, next: originalNext });
       }
-      observable.subscribe({
-        next: newNext,
+      const subscriber = observable.subscribe({
+        next: newNext({ dispatch, getState }),
         complete: newComplete,
       });
+
+     
     });
 
     return newObservable;

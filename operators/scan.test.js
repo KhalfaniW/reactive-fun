@@ -1,35 +1,29 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
 import { scan } from "./scan.js";
-import { makeStoreWithExtra } from "./redux/store.js";
 
-const storeWithExtra = makeStoreWithExtra();
-export const getState = storeWithExtra.getState;
-export const dispatch = storeWithExtra.dispatch;
+test("testing scan", (done) => {
+  const obs = new Observable((subscriber) => {
+    subscriber.next(1);
+    subscriber.next(2);
 
-const getStateTesting = () => cleanFunctions(getState());
-
-test("testing scan", () => {
-  return new Promise((resolve, reject) => {
-    var i = 0;
-    const obs2 = new Observable((subscriber) => {
-      subscriber.next(1);
-      subscriber.next(2);
-
-      setTimeout(() => {
-        subscriber.next(3);
-        subscriber.complete();
-      }, 500);
-    });
-    scan((sum, i) => sum + i, 0, { id: "scan_1", getState, dispatch })(
-      obs2,
-    ).subscribe({
-      next: (value) => {},
-      complete: () => {
-        resolve();
-        expect(getStateTesting()).toMatchObject(expected_EndState_);
-      },
-    });
+    setTimeout(() => {
+      subscriber.next(3);
+      subscriber.complete();
+    }, 500);
+  });
+  scan(
+    (sum, i) => sum + i,
+    0,
+  )(obs).subscribe({
+    complete: ({ getState }) => {
+      try {
+        expect(cleanFunctions(getState())).toMatchObject(endState);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    },
   });
 });
 
@@ -40,7 +34,7 @@ function cleanFunctions(programState) {
     }
   });
 }
-const expected_EndState_ = {
+const endState = {
   emittedValues: [
     { emittedValue: 1 },
     { emittedValue: 3 },
@@ -50,7 +44,7 @@ const expected_EndState_ = {
   isStarted: true,
   isParentComplete: true,
   effectObject: null,
-  operatorStates: [{ type: "scan", id: "scan_1", value: 6 }],
+  operatorStates: [{ type: "scan", value: 6 }],
   complete: "[Function]",
   observables: [],
 };

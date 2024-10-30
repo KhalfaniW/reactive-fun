@@ -41,7 +41,7 @@ export const stateReducer = (initialState, action) =>
     mergeAllReducer,
     scanReducer,
     switchAllReducer,
-      mapReducer,
+    mapReducer,
     exhaustAllReducer,
   ].reduce(
     (currentState, reducer) => reducer(currentState, action),

@@ -52,11 +52,11 @@ export function runEffects(state, dispatch_, store) {
       });
       break;
     case "HANDLE-EMISSION":
-      // operators like filter do not create an effect on this needs to 
+      // operators like filter do not create an effect on this needs to
       dispatch({
         type: "HANDLE-EMISSION",
-          emittedValue: state.effectObject.value,
-          next:  state.effectObject.next,
+        emittedValue: state.effectObject.value,
+        next: state.effectObject.next,
       });
       break;
     case "UNSUBSCRIBE-EFFECT":

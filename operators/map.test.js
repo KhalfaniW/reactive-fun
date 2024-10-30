@@ -3,32 +3,25 @@ import _ from "lodash";
 import { map } from "./map.js";
 import { makeStoreWithExtra } from "./redux/store.js";
 
-const storeWithExtra = makeStoreWithExtra();
-export const getState = storeWithExtra.getState;
-export const dispatch = storeWithExtra.dispatch;
+test("testing map", (done) => {
+  const obs = new Observable((subscriber) => {
+    subscriber.next(5);
+    subscriber.next(10);
+    setTimeout(() => {
+      subscriber.next(15);
+      subscriber.complete();
+    }, 500);
+  });
 
-const getStateTesting = () => cleanFunctions(getState());
-
-test("testing map", () => {
-  return new Promise((resolve, reject) => {
-    const obs = new Observable((subscriber) => {
-      subscriber.next(5);
-      subscriber.next(10);
-      setTimeout(() => {
-        subscriber.next(15);
-        subscriber.complete();
-      }, 500);
-    });
-
-    obs
-      .pipe(map((element, i) => element * 10, { getState, dispatch }))
-      .subscribe({
-        next: (value) => {},
-        complete: () => {
-          resolve();
-          expect(getStateTesting()).toMatchObject(expected_EndState_);
-        },
-      });
+  obs.pipe(map((element, i) => element * 10)).subscribe({
+    complete: ({ getState }) => {
+      try {
+        expect(cleanFunctions(getState())).toMatchObject(expected_EndState_);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    },
   });
 });
 

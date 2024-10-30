@@ -1,20 +1,18 @@
 import { createOperator, prepareObservable } from "./createOperator.js";
 
-export function map(accumulator, { id, getState, dispatch } = {}) {
+export function map(mapFn) {
   return createOperator({
-    newNext: (emission) => {
-      dispatch({
-        type: "HANDLE-EMISSION(map)",
-        operatorId: id,
-        value: emission,
-      });
-    },
+    newNext:
+      ({ dispatch }) =>
+      (emission) => {
+        dispatch({
+          type: "HANDLE-EMISSION(map)",
+          value: emission,
+        });
+      },
     initOperatorAction: {
       type: "INIT(map)",
-      operatorId: id,
-      mapFn: accumulator,
+      mapFn: mapFn,
     },
-    getState,
-    dispatch,
   });
 }

@@ -1,21 +1,21 @@
 import { createOperator, prepareObservable } from "./createOperator.js";
 
-export function mergeAll({ concurrentLimit }, { id, getState, dispatch } = {}) {
+export function mergeAll({ concurrentLimit }) {
   return createOperator({
-    newNext: (emission) => {
-      dispatch({
-        type: "HANDLE-NEW-OBSERVABLE(mergeAll)",
-        newObservable: prepareObservable({
-          emission,
-          id: `obs_${getState().observables.length}`,
-        }),
-      });
-    },
+    newNext:
+      ({ dispatch, getState }) =>
+      (emission) => {
+        dispatch({
+          type: "HANDLE-NEW-OBSERVABLE(mergeAll)",
+          newObservable: prepareObservable({
+            emission,
+            id: `obs_${getState().observables.length}`,
+          }),
+        });
+      },
     initOperatorAction: {
       type: "INIT(mergeAll)",
       concurrentLimit,
     },
-    getState,
-    dispatch,
   });
 }
