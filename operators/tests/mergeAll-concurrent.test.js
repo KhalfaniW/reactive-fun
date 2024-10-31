@@ -1,7 +1,7 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
 
-import { mergeAll } from "./mergeAll.js";
+import { mergeAll } from "../mergeAll.js";
 
 const getStateTesting = () => cleanFunctions(getState());
 

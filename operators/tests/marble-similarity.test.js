@@ -1,8 +1,8 @@
 import { TestScheduler } from "rxjs/testing";
 import { of, interval } from "rxjs";
 import { take } from "rxjs/operators";
-import { mergeAll } from "./mergeAll.js";
-import { makeStoreWithExtra } from "./redux/store.js";
+import { mergeAll } from "../mergeAll.js";
+import { makeStoreWithExtra } from "../redux/store.js";
 
 const cleanMarbles = (testOutput) =>
   testOutput

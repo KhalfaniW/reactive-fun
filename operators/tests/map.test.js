@@ -1,24 +1,22 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
-import { scan } from "./scan.js";
+import { map } from "../map.js";
+import { makeStoreWithExtra } from "../redux/store.js";
 
-test("testing scan", (done) => {
+test("testing map", (done) => {
   const obs = new Observable((subscriber) => {
-    subscriber.next(1);
-    subscriber.next(2);
-
+    subscriber.next(5);
+    subscriber.next(10);
     setTimeout(() => {
-      subscriber.next(3);
+      subscriber.next(15);
       subscriber.complete();
     }, 500);
   });
-  scan(
-    (sum, i) => sum + i,
-    0,
-  )(obs).subscribe({
+
+  obs.pipe(map((element, i) => element * 10)).subscribe({
     complete: ({ getState }) => {
       try {
-        expect(cleanFunctions(getState())).toMatchObject(endState);
+        expect(cleanFunctions(getState())).toMatchObject(expected_EndState_);
         done();
       } catch (error) {
         done(error);
@@ -34,17 +32,18 @@ function cleanFunctions(programState) {
     }
   });
 }
-const endState = {
+
+const expected_EndState_ = {
   emittedValues: [
-    { emittedValue: 1 },
-    { emittedValue: 3 },
-    { emittedValue: 6 },
+    { emittedValue: 50 },
+    { emittedValue: 100 },
+    { emittedValue: 150 },
   ],
   isCompleted: true,
   isStarted: true,
   isParentComplete: true,
   effectObject: null,
-  operatorStates: [{ type: "scan", value: 6 }],
+  operatorStates: [{ type: "map", mapIndex: 2 }],
   complete: "[Function]",
   observables: [],
 };
