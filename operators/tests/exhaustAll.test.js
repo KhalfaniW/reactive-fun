@@ -1,15 +1,16 @@
 import { Observable } from "rxjs";
 import _ from "lodash";
 
+import { cleanState } from "./utils/index.js";
 import { exhaustAll } from "../exhaustAll.js";
 
 test("testing exhaustAll 1", (done) => {
   getHigherOrderObservable()
     .pipe(exhaustAll())
     .subscribe({
-      complete: ({ getState }) => {
+      complete: ({ getState, events }) => {
         try {
-          expect(cleanFunctions(getState())).toMatchObject(endState);
+          expect(cleanState(getState())).toMatchObject(endState);
           done();
         } catch (error) {
           done(error);
@@ -64,13 +65,6 @@ function getHigherOrderObservable() {
   });
 }
 
-function cleanFunctions(programState) {
-  return _.cloneDeepWith(programState, (value) => {
-    if (_.isFunction(value)) {
-      return "[Function]";
-    }
-  });
-}
 const endState = {
   emittedValues: [
     { id: 0, emittedValue: 1 },

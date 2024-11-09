@@ -1,3 +1,4 @@
+import { cleanState } from "./utils/index.js";
 import { Observable } from "rxjs";
 import _ from "lodash";
 import { scan } from "../scan.js";
@@ -18,7 +19,7 @@ test("testing scan", (done) => {
   )(obs).subscribe({
     complete: ({ getState }) => {
       try {
-        expect(cleanFunctions(getState())).toMatchObject(endState);
+        expect(cleanState(getState())).toMatchObject(endState);
         done();
       } catch (error) {
         done(error);
@@ -27,13 +28,6 @@ test("testing scan", (done) => {
   });
 });
 
-function cleanFunctions(programState) {
-  return _.cloneDeepWith(programState, (value) => {
-    if (_.isFunction(value)) {
-      return "[Function]";
-    }
-  });
-}
 const endState = {
   emittedValues: [
     { emittedValue: 1 },

@@ -18,13 +18,11 @@ concurrentLimit: Infinity,
  */
 
 export function mainReducer(
-  stateInput = { emittedValues: [], isCompleted: false, isStarted: false },
+  state = { emittedValues: [], isCompleted: false, isStarted: false },
   action,
 ) {
   //TODO make clearing effect object a swtich case so it can collect multiple effects
-  const state = { ...stateInput, effectObject: null };
 
-  const draftState = { ...state };
   switch (action.type) {
     case "INIT":
       return {
@@ -35,7 +33,11 @@ export function mainReducer(
         complete: action.complete,
         observables: action.observables,
       };
-
+    case "CLEAR-EFFECTS":
+      return {
+        ...state,
+        effectObject: null,
+      };
     case "HANDLE-EMISSION":
       return {
         ...state,
@@ -89,7 +91,7 @@ export function mainReducer(
       return { ...state, isCompleted: true };
       break;
   }
-  return draftState;
+  return state;
 }
 
 export function subscriptionReducer(state, action) {
@@ -134,6 +136,7 @@ export function subscriptionReducer(state, action) {
       break;
 
     case "SUBSCRIPTION-START-1":
+      //TODO remove this check
       if (isMERGE)
         return {
           ...state,

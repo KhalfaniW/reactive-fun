@@ -1,3 +1,4 @@
+import { cleanState } from "./utils/index.js";
 import { Observable } from "rxjs";
 import _ from "lodash";
 import { map } from "../map.js";
@@ -16,7 +17,7 @@ test("testing map", (done) => {
   obs.pipe(map((element, i) => element * 10)).subscribe({
     complete: ({ getState }) => {
       try {
-        expect(cleanFunctions(getState())).toMatchObject(expected_EndState_);
+        expect(cleanState(getState())).toMatchObject(expected_EndState_);
         done();
       } catch (error) {
         done(error);
@@ -24,14 +25,6 @@ test("testing map", (done) => {
     },
   });
 });
-
-function cleanFunctions(programState) {
-  return _.cloneDeepWith(programState, (value) => {
-    if (_.isFunction(value)) {
-      return "[Function]";
-    }
-  });
-}
 
 const expected_EndState_ = {
   emittedValues: [

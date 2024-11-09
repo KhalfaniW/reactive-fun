@@ -8,6 +8,7 @@ export const runEffectsMiddleWare = (store) => (next) => (action) => {
   const state = store.getState();
 
   if (state.effectObject) {
+    store.dispatch({ type: "CLEAR-EFFECTS" });
     if (Array.isArray(state.effectObject)) {
       state.effectObject.forEach((e) => {
         runEffects({ ...state, effectObject: e }, store.dispatch, store);
@@ -37,13 +38,14 @@ export function runEffects(state, dispatch_, store) {
   const operatorState = state.operatorStates.find(
     (operator) => operator.id == observable?.operatorId,
   );
+
   switch (state.effectObject.type) {
     case "COMPLETE_STATE":
       dispatch({ type: "ALL-COMPLETE" });
-      state.complete();
+      state.complete(store);
       break;
     case "EMIT":
-      state.effectObject.next(state.effectObject.emittedValue);
+      state.effectObject.next(state.effectObject.emittedValue, store);
       break;
     case "COMPLETE-OPERATOR":
       dispatch({
@@ -52,7 +54,6 @@ export function runEffects(state, dispatch_, store) {
       });
       break;
     case "HANDLE-EMISSION":
-      // operators like filter do not create an effect on this needs to
       dispatch({
         type: "HANDLE-EMISSION",
         emittedValue: state.effectObject.value,

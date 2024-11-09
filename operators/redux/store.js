@@ -8,6 +8,9 @@ import {
 } from "./middleware.js";
 import { runEffectsMiddleWare } from "./effects.js";
 
+export { stateReducer };
+import { Observable, isObservable } from "rxjs";
+
 export function makeStoreWithExtra() {
   let allActions_ = [];
   let allStates_ = [];

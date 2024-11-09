@@ -2,6 +2,11 @@
 
 Recreatee rxJS toosl using funcitona programmignto get funciotnal beneftis
 
+Priorities:
+
+    1. debugging
+    2. testing
+
 #### Goals:
 
 - time travel debugging
@@ -43,3 +48,4 @@ Maybe
 
     - ~~change state to not be optimistic~~
        ~~only change state after effect~~
+

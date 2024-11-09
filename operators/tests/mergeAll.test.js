@@ -1,3 +1,4 @@
+import { cleanState } from "./utils/index.js";
 import { Observable } from "rxjs";
 import _ from "lodash";
 
@@ -5,7 +6,7 @@ import { mergeAll } from "../mergeAll.js";
 import { makeStoreWithExtra } from "../redux/store.js";
 
 const { getState, dispatch } = makeStoreWithExtra();
-const getStateTesting = () => cleanFunctions(getState());
+const getStateTesting = () => cleanState(getState());
 
 test("concatAll using mergeAll concurrency 1", (done) => {
   getHigherOrderObservable()
@@ -14,7 +15,7 @@ test("concatAll using mergeAll concurrency 1", (done) => {
       next: (value) => {},
       complete: ({ getState }) => {
         try {
-          expect(cleanFunctions(getState())).toMatchObject(endState);
+          expect(cleanState(getState())).toMatchObject(endState);
           done();
         } catch (error) {
           done(error);
@@ -61,14 +62,6 @@ function getHigherOrderObservable() {
     subscriber.next(obs2);
     subscriber.next(obs3);
     subscriber.complete();
-  });
-}
-
-function cleanFunctions(programState) {
-  return _.cloneDeepWith(programState, (value) => {
-    if (_.isFunction(value)) {
-      return "[Function]";
-    }
   });
 }
 
