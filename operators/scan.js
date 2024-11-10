@@ -12,7 +12,6 @@ export function scan(accumulator, firstValue = null) {
       },
     initOperatorAction: {
       type: "INIT(scan)",
-
       initialValue: firstValue,
       accumulator,
     },

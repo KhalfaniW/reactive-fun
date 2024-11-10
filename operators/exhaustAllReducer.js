@@ -119,64 +119,6 @@ export function exhaustAllReducer(
   }
 }
 
-function handleObservableCompleteRM(updatedState, action) {
-  const runningObservableCount = updatedState.observables.filter(
-    (observable) =>
-      observable.operatorId === action.operatorId &&
-      observable.observeState === "RUNNING",
-  ).length;
-  const nextBufferedObservable = updatedState.observables.find(
-    (observable) =>
-      observable.operatorId === action.operatorId &&
-      observable.observeState === "BUFFERED",
-  );
-  const operatorConcurrentLimit = updatedState.operatorStates.find(
-    (op) => op.id === action.operatorId,
-  ).concurrentLimit;
-
-  if (
-    nextBufferedObservable &&
-    operatorConcurrentLimit > runningObservableCount
-  ) {
-    return {
-      ...updatedState,
-
-      effectObject: {
-        type: "SUBSCRIBE-EFFECT",
-        observableId: nextBufferedObservable.id,
-        operatorId: action.operatorId,
-        createSubscriber: createSubscriberLink({
-          observableId: nextBufferedObservable.id,
-          operatorId: action.operatorId,
-        }),
-      },
-    };
-  }
-
-  const activeCount = updatedState.observables.filter(
-    (observable) =>
-      observable.operatorId === action.operatorId &&
-      observable.observeState === "RUNNING",
-  ).length;
-
-  const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
-
-  if (isEverythingFinished) {
-    return {
-      ...updatedState,
-      effectObject: {
-        type: "COMPLETE-OPERATOR",
-        operatorId: action.operatorId,
-      },
-    };
-  }
-
-  return {
-    ...updatedState,
-    observables: updatedState.observables,
-  };
-}
-
 function createSubscriberLink({ observableId, operatorId }) {
   return (store) => {
     const state = store.getState();

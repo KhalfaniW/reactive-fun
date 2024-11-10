@@ -3,7 +3,7 @@ import { mergeAllReducer } from "../mergeAllReducer.js";
 import { switchAllReducer } from "../switchAllReducer.js";
 import { exhaustAllReducer } from "../exhaustAllReducer.js";
 import { scanReducer } from "../scanReducer.js";
-
+import { takeReducer } from "../takeReducer.js";
 import { mapReducer } from "../mapReducer.js";
 import { tapReducer } from "../tapReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
@@ -43,6 +43,7 @@ export const stateReducer = (initialState, action) =>
     scanReducer,
     switchAllReducer,
     mapReducer,
+    takeReducer,
     tapReducer,
     exhaustAllReducer,
   ].reduce(

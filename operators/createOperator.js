@@ -42,10 +42,10 @@ export function createOperator({
 
       const currentOperatorStore =
         operatorComplete === null
-          ? selectOperatorStore(mainStore, "operator-id")
+          ? //TODO remove
+            selectOperatorStore(mainStore, "operator-id")
           : {
               dispatch: (action) => {
-                debugger;
                 mainStore.dispatch({ ...action, id });
               },
               getState: () => mainStore.getState()[id],
@@ -87,6 +87,8 @@ export function createOperator({
       });
 
       const sourceObservableSubscriber = observable.subscribe({
+        //the subscribed observable will emit even if the operator completes
+        // such actions are ignored in the state reducer
         next: newNext(currentOperatorStore),
         complete: () => {
           currentOperatorStore.dispatch({
@@ -104,6 +106,7 @@ function selectOperatorStore(allOperatorsStore, selector) {
     getState: () => allOperatorsStore.getState()[selector],
     dispatch: (action) =>
       allOperatorsStore.dispatch({ ...action, id: selector }),
+    debug: allOperatorsStore.debug,
   };
 }
 
@@ -124,12 +127,23 @@ export function makeMainStore() {
   let events = [];
   let previousID = "sample-id";
   let startTime = null;
+
+  let debug = {
+    allStates: allStates_,
+    allActions: allActions_,
+    events,
+  };
   const baseReduxStore = createStore(
     (state, action) => {
       if (action?.id !== undefined) {
+        const operartorState = state?.[action.id];
+        if (operartorState && operartorState.isCompleted) {
+          return state;
+        }
+
         return {
           ...state,
-          [action.id]: stateReducer(state?.[action.id], action),
+          [action.id]: stateReducer(operartorState, action),
         };
       }
       return state;
@@ -155,7 +169,14 @@ export function makeMainStore() {
       (store) => (next) => (action) => {
         if (startTime === null) startTime = Date.now();
         const resultAction = next(action);
-        const operatorStore = selectOperatorStore(store, action.id);
+        const operatorStore = {
+          ...selectOperatorStore(store, action.id),
+          debug: {
+            allStates: allStates_,
+            allActions: allActions_,
+            events,
+          },
+        };
         const operatorState = operatorStore.getState();
         if (operatorState?.effectObject) {
           operatorStore.dispatch({ type: "CLEAR-EFFECTS" });
@@ -189,10 +210,6 @@ export function makeMainStore() {
 
   return {
     ...baseReduxStore,
-    debug: {
-      allStates: allStates_,
-      allActions: allActions_,
-      events,
-    },
+    debug,
   };
 }
