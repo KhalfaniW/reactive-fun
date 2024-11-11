@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { cleanState } from "./utils/index.js";
 import { Observable } from "rxjs";
 import _ from "lodash";
@@ -11,10 +12,13 @@ test("testing tap", (done) => {
     }, 6);
   });
 
+  const tapComplete = jest.fn();
+  const tapNext = jest.fn();
   obs
     .pipe(
       tap({
         next: (emmison, { getState }) => {
+          tapNext();
           expect(cleanState(getState())).toMatchObject({
             emittedValues: [{ emittedValue: 10 }],
             isCompleted: false,
@@ -27,27 +31,29 @@ test("testing tap", (done) => {
         },
 
         complete: (completeStore) => {
-          try {
-            expect(cleanState(completeStore.getState())).toMatchObject(
-              expected_EndState_,
-            );
-            done();
-          } catch (error) {
-            done(error);
-          }
+          tapComplete();
+          expect(cleanState(completeStore.getState())).toMatchObject({
+            emittedValues: [{ emittedValue: 10 }],
+            isCompleted: false,
+            isStarted: true,
+            isParentComplete: true,
+            effectObject: null,
+            operatorStates: [{ type: "tap", next: "[Function]" }],
+            complete: "[Function]",
+            observables: [],
+          });
         },
       }),
     )
-    .subscribe();
+    .subscribe({
+      complete: (store) => {
+        try {
+          expect(tapNext).toHaveBeenCalled();
+          expect(tapComplete).toHaveBeenCalled();
+          done();
+        } catch (error) {
+          done(error);
+        }
+      },
+    });
 });
-
-const expected_EndState_ = {
-  emittedValues: [{ emittedValue: 10 }],
-  isCompleted: true,
-  isStarted: true,
-  isParentComplete: true,
-  effectObject: null,
-  operatorStates: [{ type: "tap", next: "[Function]" }],
-  complete: "[Function]",
-  observables: [],
-};

@@ -11,105 +11,104 @@ test("testing tap composed", (done) => {
       subscriber.complete();
     }, 6);
   });
+  obs.baseID = "start";
+  const tapped = tap({
+    next: (...p) => {
+      debugger;
+    },
 
-  obs
-    .pipe(
-      tap({
-        complete: (store) => {
-          expect(cleanState(store.getState())).toMatchObject({
-            0: {
-              emittedValues: [
-                { id: undefined, emittedValue: 10 },
-                { id: undefined, emittedValue: 20 },
-              ],
-              isCompleted: true,
-              isStarted: true,
-              effectObject: null,
-              operatorStates: [
-                {
-                  type: "tap",
-                  next: "[Function]",
-                  complete: undefined,
-                },
-              ],
+    complete: (store_, mainStore) => {
+      const state = store_.debug.getFullStateReadable();
+      expect(cleanState(state)).toMatchObject({
+        0: {
+          emittedValues: [
+            { id: undefined, emittedValue: 10 },
+            { id: undefined, emittedValue: 20 },
+          ],
+          isCompleted: false,
+          isStarted: true,
+          effectObject: null,
+          operatorStates: [
+            {
+              type: "tap",
+              next: "[Function]",
               complete: "[Function]",
-              observables: [],
             },
-            1: {
-              emittedValues: [
-                { id: undefined, emittedValue: 10 },
-                { id: undefined, emittedValue: 20 },
-              ],
-              isCompleted: true,
-              isStarted: true,
-              effectObject: null,
-              operatorStates: [
-                {
-                  type: "tap",
-                  next: "[Function]",
-                  complete: undefined,
-                  // isCompleted: true,
-                },
-              ],
+          ],
+          complete: "[Function]",
+          observables: [],
+        },
+        1: {
+          emittedValues: [
+            { id: undefined, emittedValue: 10 },
+            { id: undefined, emittedValue: 20 },
+          ],
+          isCompleted: false,
+          isStarted: true,
+          effectObject: null,
+          operatorStates: [
+            {
+              type: "tap",
+              next: "[Function]",
               complete: "[Function]",
-              observables: [],
-              isParentComplete: true,
             },
-          });
+          ],
+          complete: "[Function]",
+          observables: [],
         },
-      }),
-
-      tap({
-        complete: (store) => {
-          try {
-            expect(cleanState(store.getState())).toMatchObject({
-              0: {
-                emittedValues: [
-                  { id: undefined, emittedValue: 10 },
-                  { id: undefined, emittedValue: 20 },
-                ],
-                isCompleted: true,
-                isStarted: true,
-                effectObject: null,
-                operatorStates: [
-                  {
-                    type: "tap",
-                    next: "[Function]",
-                    complete: undefined,
-                    isCompleted: true,
-                  },
-                ],
+      });
+    },
+  })(obs);
+  tapped.id = "tapped";
+  const tapped2Times = tap({
+    complete: (store) => {
+      const fullState = store.debug.getFullStateReadable();
+      try {
+        expect(cleanState(fullState)).toMatchObject({
+          0: {
+            emittedValues: [
+              { id: undefined, emittedValue: 10 },
+              { id: undefined, emittedValue: 20 },
+            ],
+            isCompleted: true,
+            isStarted: true,
+            effectObject: null,
+            operatorStates: [
+              {
+                type: "tap",
+                next: "[Function]",
                 complete: "[Function]",
-                observables: [],
-                isParentComplete: true,
               },
-              1: {
-                emittedValues: [
-                  { id: undefined, emittedValue: 10 },
-                  { id: undefined, emittedValue: 20 },
-                ],
-                isCompleted: true,
-                isStarted: true,
-                effectObject: null,
-                operatorStates: [
-                  {
-                    type: "tap",
-                    next: "[Function]",
-                    complete: undefined,
-                    isCompleted: true,
-                  },
-                ],
+            ],
+            complete: "[Function]",
+            observables: [],
+            isParentComplete: true,
+          },
+          1: {
+            emittedValues: [
+              { id: undefined, emittedValue: 10 },
+              { id: undefined, emittedValue: 20 },
+            ],
+            isCompleted: false,
+            isStarted: true,
+            effectObject: null,
+            operatorStates: [
+              {
+                type: "tap",
+                next: "[Function]",
                 complete: "[Function]",
-                observables: [],
-                isParentComplete: true,
               },
-            });
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-      }),
-    )
-    .subscribe();
+            ],
+            complete: "[Function]",
+            observables: [],
+            isParentComplete: true,
+          },
+        });
+        done();
+      } catch (error) {
+        done(error);
+      }
+    },
+  })(tapped);
+  tapped2Times.subscribe();
 });

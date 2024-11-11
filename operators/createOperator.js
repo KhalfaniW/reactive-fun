@@ -8,7 +8,7 @@ import {
   addDispatchContext,
 } from "./redux/middleware.js";
 import { runEffectsMiddleWare, runEffects } from "./redux/effects.js";
-
+import _ from "lodash";
 // Extend Observable to initialize a new mainStore for each instance
 const OriginalObservable = Observable;
 Object.defineProperty(Observable.prototype, "mainStore", {
@@ -35,22 +35,17 @@ export function createOperator({
   return (observable) => {
     const mainStore = observable.mainStore;
     const newObservable = new Observable((originalSubscriber) => {
-      const id =
-        mainStore.getState() === undefined
-          ? "0"
-          : `${Object.keys(mainStore.getState()).length}`;
+      //subscriptions are evaluated reversse order from caller to source
+      //use negative ids to signal that it is called last to first
+      const id = `${-Object.keys(mainStore.getState() || []).length}`;
 
-      const currentOperatorStore =
-        operatorComplete === null
-          ? //TODO remove
-            selectOperatorStore(mainStore, "operator-id")
-          : {
-              dispatch: (action) => {
-                mainStore.dispatch({ ...action, id });
-              },
-              getState: () => mainStore.getState()[id],
-              debug: mainStore.debug,
-            };
+      const currentOperatorStore = {
+        dispatch: (action) => {
+          mainStore.dispatch({ ...action, id });
+        },
+        getState: () => mainStore.getState()[id],
+        debug: mainStore.debug,
+      };
 
       originalSubscriber.store = currentOperatorStore;
 
@@ -59,6 +54,7 @@ export function createOperator({
       };
 
       const observableComplete = () => {
+        //add store to operator complete
         const originalFinalCompleteFunctionReference =
           originalSubscriber.destination.partialObserver.complete;
         if (originalFinalCompleteFunctionReference) {
@@ -66,11 +62,7 @@ export function createOperator({
             originalFinalCompleteFunctionReference(currentOperatorStore);
           };
         }
-
         originalSubscriber.complete();
-        if (operatorComplete) {
-          operatorComplete(mainStore);
-        }
       };
 
       currentOperatorStore.dispatch({
@@ -169,9 +161,11 @@ export function makeMainStore() {
       (store) => (next) => (action) => {
         if (startTime === null) startTime = Date.now();
         const resultAction = next(action);
+
         const operatorStore = {
           ...selectOperatorStore(store, action.id),
           debug: {
+            ...debug,
             allStates: allStates_,
             allActions: allActions_,
             events,
@@ -189,6 +183,7 @@ export function makeMainStore() {
               );
               events.push({
                 event: operatorState.effectObject,
+                id: action.id,
                 time: Date.now() - startTime,
               });
             });
@@ -196,6 +191,7 @@ export function makeMainStore() {
             runEffects(operatorState, operatorStore.dispatch, operatorStore);
             events.push({
               event: operatorState.effectObject,
+              id: action.id,
               time: Date.now() - startTime,
             });
           }
@@ -207,9 +203,15 @@ export function makeMainStore() {
       createSaveHistoryMiddleware(allStates_, allActions_),
     ),
   );
+  debug.getFullStateInternal = () => baseReduxStore.getState();
+  debug.getFullStateReadable = () =>
+    _.mapKeys(baseReduxStore.getState(), (value, key, collection) => {
+      //TODO refactor to not need hack
+      return `${Object.keys(collection).length + Number(key) - 1}`;
+    });
 
   return {
     ...baseReduxStore,
-    debug,
+    debug: debug,
   };
 }

@@ -35,9 +35,10 @@ export function runEffects(state, dispatch_, store) {
     (obs) => obs.id == state.effectObject?.observableId,
   );
 
-  const operatorState = state.operatorStates.find(
-    (operator) => operator.id == observable?.operatorId,
-  );
+  const operatorState =
+    state.operatorStates.find(
+      (operator) => operator.id == observable?.operatorId,
+    ) || state.operatorStates[0];
 
   switch (state.effectObject.type) {
     case "COMPLETE_STATE":
@@ -48,10 +49,12 @@ export function runEffects(state, dispatch_, store) {
       state.effectObject.next(state.effectObject.emittedValue, store);
       break;
     case "COMPLETE-OPERATOR":
+      operatorState.complete?.(store);
       dispatch({
         type: "HANDLE-OPERATOR-COMPLETE",
         operatorId: state.effectObject.operatorId,
       });
+
       break;
     case "HANDLE-EMISSION":
       dispatch({
