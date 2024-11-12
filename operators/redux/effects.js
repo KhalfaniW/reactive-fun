@@ -54,7 +54,6 @@ export function runEffects(state, dispatch_, store) {
         type: "HANDLE-OPERATOR-COMPLETE",
         operatorId: state.effectObject.operatorId,
       });
-
       break;
     case "HANDLE-EMISSION":
       dispatch({
