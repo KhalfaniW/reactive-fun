@@ -6,7 +6,6 @@ import { mergeAll } from "../mergeAll.js";
 import { makeStoreWithExtra } from "../redux/store.js";
 
 const { getState, dispatch } = makeStoreWithExtra();
-const getStateTesting = () => cleanState(getState());
 
 test("concatAll using mergeAll concurrency 1", (done) => {
   getHigherOrderObservable()

@@ -23,19 +23,19 @@ export function makeMainStore() {
     events,
   };
   const baseReduxStore = createStore(
-    (state, action) => {
+    (internalState, action) => {
       if (action?.id !== undefined) {
-        const operartorState = state?.[action.id];
+        const operartorState = internalState?.[action.id];
         if (operartorState && operartorState.isCompleted) {
-          return state;
+          return internalState;
         }
 
         return {
-          ...state,
+          ...internalState,
           [action.id]: stateReducer(operartorState, action),
         };
       }
-      return state;
+      return internalState;
     },
     applyMiddleware(
       (store) => (next) => (action) => {
@@ -76,7 +76,7 @@ export function makeMainStore() {
               runEffects(
                 { ...operatorState, effectObject: e },
                 operatorStore.dispatch,
-                operatorStore
+                operatorStore,
               );
               events.push({
                 event: operatorState.effectObject,
@@ -97,15 +97,16 @@ export function makeMainStore() {
       },
       addDispatchContext,
       asyncDispatchMiddleware,
-      createSaveHistoryMiddleware(allStates_, allActions_)
-    )
+      createSaveHistoryMiddleware(allStates_, allActions_),
+    ),
   );
   debug.getFullStateInternal = () => baseReduxStore.getState();
-  debug.getFullStateReadable = () =>
-    _.mapKeys(baseReduxStore.getState(), (value, key, collection) => {
-      //TODO refactor to not need hack
-      return `${Object.keys(collection).length + Number(key) - 1}`;
-    });
+  debug.getFullStateReadable = () => {
+    const internalState = baseReduxStore.getState();
+    const numericKeys = Object.keys(internalState).map(Number);
+    const sortedKeys = _.sortBy(numericKeys);
+    return sortedKeys.map((key) => internalState[key]);
+  };
 
   return {
     ...baseReduxStore,
@@ -114,10 +115,10 @@ export function makeMainStore() {
 }
 
 function selectOperatorStore(allOperatorsStore, selector) {
-    return {
-        getState: () => allOperatorsStore.getState()[selector],
-        dispatch: (action) =>
-        allOperatorsStore.dispatch({ ...action, id: selector }),
-        debug: allOperatorsStore.debug,
-    };
+  return {
+    getState: () => allOperatorsStore.getState()[selector],
+    dispatch: (action) =>
+      allOperatorsStore.dispatch({ ...action, id: selector }),
+    debug: allOperatorsStore.debug,
+  };
 }

@@ -40,10 +40,8 @@ export function switchAllReducer(
       stateChange: stateChange,
     });
   };
-  const thisOperator = state.operatorStates?.find(
-    (operator) => operator.id === action.operatorId,
-  );
 
+  const thisOperator = state.operatorStates?.[0];
   switch (action.type) {
     case "INIT(switchAll)":
       return {
@@ -118,9 +116,31 @@ export function switchAllReducer(
             : observable,
         ),
       };
+    case "PARENT-COMPLETE":
+      if (thisOperator.type !== "switchAll") {
+        return state;
+      }
+      if (thisOperator.currentObservableId === null) {
+        return {
+          ...state,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
+      }
+      return state;
     case "OBSERVABLE-COMPLETE(switchAll)":
       return {
         ...state,
+        operatorStates: state.operatorStates.map((operator) =>
+          operator.id == thisOperator.id
+            ? {
+                ...operator,
+                currentObservableId: null,
+              }
+            : operator,
+        ),
         observables: state.observables.map((observable) =>
           observable.id === action.observableId
             ? {
@@ -130,16 +150,16 @@ export function switchAllReducer(
             : observable,
         ),
       };
+
     case "HANDLE-OBSERVABLE-COMPLETE(switchAll)":
       const updatedState = switchAllReducer(state, {
         type: "OBSERVABLE-COMPLETE(switchAll)",
         observableId: action.observableId,
       });
-      const thisOperator = state.operatorStates.find(
-        (operator) => operator.id == action.operatorId,
-      );
+
       const isEverythingFinished =
-        thisOperator.currentObservableId === action.observableId;
+        thisOperator.currentObservableId === action.observableId &&
+        state.isParentComplete;
 
       if (isEverythingFinished) {
         return {

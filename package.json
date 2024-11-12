@@ -7,8 +7,9 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test-watch": "JEST_HIDE_USAGE=1 npm test --- --all --watch ",
+    "tw": "npm test-watch",
     "format": "prettier --write '**/*.js*'",
-    "debug": "node inspect --experimental-vm-modules   node_modules/jest/bin/jest.js  --runInBand --silent=false  --no-silent",
+    "debug": "node inspect --experimental-vm-modules   node_modules/jest/bin/jest.js --runInBand  --verbose --silent=false  --no-silent ",
     "prepare": "husky"
   },
   "keywords": [],

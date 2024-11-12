@@ -86,6 +86,9 @@ export function exhaustAllReducer(
       };
 
     case "PARENT-COMPLETE":
+      if (thisOperator.type !== "exhaustAll") {
+        return state;
+      }
       if (thisOperator.currentObservableId === null) {
         return {
           ...state,

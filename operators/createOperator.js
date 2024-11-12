@@ -95,7 +95,6 @@ export function createOperator({
   };
 }
 
-
 export function prepareObservable({ emission, id }) {
   if (!isObservable(emission)) {
     throw new Error(`non observable ,${emission} sent to exhaustAll `);

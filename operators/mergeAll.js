@@ -1,6 +1,6 @@
 import { createOperator, prepareObservable } from "./createOperator.js";
 
-export function mergeAll({ concurrentLimit }) {
+export function mergeAll({ concurrentLimit } = { concurrentLimit: Infinity }) {
   return createOperator({
     newNext:
       ({ dispatch, getState }) =>

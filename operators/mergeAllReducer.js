@@ -40,7 +40,10 @@ export function mergeAllReducer(
       stateChange: stateChange,
     });
   };
-  const thisOperator = state.operatorStates && state.operatorStates[0];
+  const thisOperator = state.operatorStates?.[0];
+  const activeCountForOperator = state.observables?.filter(
+    (observable) => observable.observeState === "RUNNING",
+  ).length;
   switch (action.type) {
     case "INIT(mergeAll)":
       return {
@@ -55,10 +58,6 @@ export function mergeAllReducer(
       };
 
     case "HANDLE-NEW-OBSERVABLE(mergeAll)":
-      const activeCountForOperator = state.observables.filter(
-        (observable) => observable.observeState === "RUNNING",
-      ).length;
-
       if (activeCountForOperator === thisOperator.concurrentLimit) {
         return {
           ...state,
@@ -86,7 +85,26 @@ export function mergeAllReducer(
           }),
         },
       };
+    case "PARENT-COMPLETE":
+      if (thisOperator.type !== "mergeAll") {
+        return state;
+      }
+      const nextBufferedObservable = state.observables.find(
+        (observable) =>
+          observable.operatorId === action.operatorId &&
+          observable.observeState === "BUFFERED",
+      );
 
+      if (!nextBufferedObservable && activeCountForOperator === 0) {
+        return {
+          ...state,
+          effectObject: {
+            type: "COMPLETE-OPERATOR",
+            operatorId: action.operatorId,
+          },
+        };
+      }
+      return state;
     case "HANDLE-OBSERVABLE-COMPLETE(mergeAll)":
       const updatedState = {
         ...state,
@@ -171,7 +189,10 @@ function handleObservableCompleteMerge(updatedState, action) {
       observable.observeState === "RUNNING",
   ).length;
 
-  const isEverythingFinished = !nextBufferedObservable && activeCount === 0;
+  const isEverythingFinished =
+    !nextBufferedObservable &&
+    activeCount === 0 &&
+    updatedState.isParentComplete;
 
   if (isEverythingFinished) {
     return {

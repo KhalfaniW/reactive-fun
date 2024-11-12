@@ -1,7 +1,7 @@
-import { cleanState } from "./utils/index.js";
+import { cleanState } from "../utils/index.js";
 import { Observable, tap as rxTap } from "rxjs";
 import _ from "lodash";
-import { tap } from "../tap.js";
+import { tap } from "../../tap.js";
 
 test("testing tap composed", (done) => {
   const obs = new Observable((subscriber) => {
