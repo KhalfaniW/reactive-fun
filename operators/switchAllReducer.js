@@ -1,15 +1,4 @@
-/**
- * @param {{ list: any[], selector: (element: any) => boolean, stateChange: object }} params
- * @param {any[]} params.list
- * @param {(element: any) => boolean} params.selector
- * @param {object} params.stateChange
- * @returns {any[]}
- */
-const updateMatchingElements = ({ list, selector, stateChange }) => {
-  return list.map((element) =>
-    selector(element) ? { ...element, ...stateChange } : element,
-  );
-};
+import { highOrderOperate } from "./utils/highOrderOperate";
 
 /**
  * @typedef {Object} StateObject
@@ -33,65 +22,76 @@ export function switchAllReducer(
   },
   action,
 ) {
-  const updateActionObservable = (stateChange) => {
-    return updateMatchingElements({
-      list: state.observables,
-      selector: (observable) => observable.id === action.observableId,
-      stateChange: stateChange,
-    });
-  };
-
   const thisOperator = state.operatorStates?.[0];
-  switch (action.type) {
-    case "INIT(switchAll)":
+
+  return highOrderOperate({
+    initState: {
+      isCompleted: false,
+      currentObservableId: null,
+    },
+    makeSubscriber: ({
+      getState,
+      dispatch,
+      state,
+      observable,
+      operatorState,
+      operatorType,
+      observableId,
+      operatorId,
+    }) => {
       return {
-        ...state,
-        operatorStates: (state.operatorStates || []).concat({
-          type: "switchAll",
-          id: action.operatorId,
-          isCompleted: false,
-          next: action.next,
-          currentObservableId: null,
-        }),
+        next: (value) => {
+          // this should be decoupled from observable and stateless
+          const observable = getState().observables.find(
+            //TODO try using param
+            (obs) => obs.id == observableId,
+          );
+
+          const operatorState = getState().operatorStates.find(
+            (operator) => operator.id == observable?.operatorId,
+          );
+
+          if (operatorState.currentObservableId === observable.id) {
+            dispatch({
+              type: "HANDLE-EMISSION",
+              observableId: observable.id,
+              emittedValue: value,
+              next: operatorState.next,
+            });
+          }
+        },
+        complete: () => {
+          dispatch({
+            type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
+            observableId: observableId,
+            operatorId: operatorId,
+          });
+        },
       };
-    case "HANDLE-NEW-OBSERVABLE(switchAll)":
+    },
+    handleNewObservable: ({
+      state,
+      operatorType,
+      createSubscriberLink,
+      makeSubscriber,
+    }) => {
       const currentOperator = state.operatorStates.find(
         (op) => op.id === action.operatorId,
       );
+
+      const newObservable = {
+        ...action.newObservable,
+        operatorId: action.operatorId,
+      };
+
+      let effectObject;
       if (currentOperator.currentObservableId) {
-        return {
-          ...state,
-          observables: state.observables.concat({
-            ...action.newObservable,
+        effectObject = [
+          {
+            type: "UNSUBSCRIBE-EFFECT",
+            observableId: currentOperator.currentObservableId,
             operatorId: action.operatorId,
-          }),
-
-          effectObject: [
-            {
-              type: "UNSUBSCRIBE-EFFECT",
-              observableId: currentOperator.currentObservableId,
-              operatorId: action.operatorId,
-            },
-            {
-              type: "SUBSCRIBE-EFFECT",
-              observableId: action.newObservable.id,
-              operatorId: action.operatorId,
-              createSubscriber: createSubscriberLink({
-                observableId: action.newObservable.id,
-                operatorId: action.operatorId,
-              }),
-            },
-          ],
-        };
-      }
-      return {
-        ...state,
-        observables: state.observables.concat({
-          ...action.newObservable,
-          operatorId: action.operatorId,
-        }),
-
-        effectObject: [
+          },
           {
             type: "SUBSCRIBE-EFFECT",
             observableId: action.newObservable.id,
@@ -99,69 +99,39 @@ export function switchAllReducer(
             createSubscriber: createSubscriberLink({
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
+              makeSubscriber,
             }),
           },
-        ],
-      };
-
-    case "OBSERVABLE-UNSUBSCRIBE(switchAll)":
-      return {
-        ...state,
-        observables: state.observables.map((observable) =>
-          observable.id === action.observableId
-            ? {
-                ...observable,
-                observeState: "UNSUBSCRIBED",
-              }
-            : observable,
-        ),
-      };
-    case "PARENT-COMPLETE":
-      if (thisOperator.type !== "switchAll") {
-        return state;
-      }
-      if (thisOperator.currentObservableId === null) {
-        return {
-          ...state,
-          effectObject: {
-            type: "COMPLETE-OPERATOR",
+        ];
+      } else {
+        effectObject = [
+          {
+            type: "SUBSCRIBE-EFFECT",
+            observableId: action.newObservable.id,
             operatorId: action.operatorId,
+            createSubscriber: createSubscriberLink({
+              observableId: action.newObservable.id,
+              operatorId: action.operatorId,
+              makeSubscriber,
+            }),
           },
-        };
+        ];
       }
-      return state;
-    case "OBSERVABLE-COMPLETE(switchAll)":
+
       return {
         ...state,
-        operatorStates: state.operatorStates.map((operator) =>
-          operator.id == thisOperator.id
-            ? {
-                ...operator,
-                currentObservableId: null,
-              }
-            : operator,
-        ),
-        observables: state.observables.map((observable) =>
-          observable.id === action.observableId
-            ? {
-                ...observable,
-                observeState: "COMPLETED",
-              }
-            : observable,
-        ),
+        observables: [...state.observables, newObservable],
+        effectObject,
       };
+    },
 
-    case "HANDLE-OBSERVABLE-COMPLETE(switchAll)":
+    handleComplete: ({ operatorType, action }) => {
       const updatedState = switchAllReducer(state, {
-        type: "OBSERVABLE-COMPLETE(switchAll)",
-        observableId: action.observableId,
+        ...action,
+        type: `OBSERVABLE-COMPLETE(${operatorType})`,
       });
 
-      const isEverythingFinished =
-        thisOperator.currentObservableId === action.observableId &&
-        state.isParentComplete;
-
-      if (isEverythingFinished) {
+      if (updatedState.isParentComplete) {
         return {
           ...updatedState,
           effectObject: {
@@ -170,52 +140,15 @@ export function switchAllReducer(
           },
         };
       }
-
       return updatedState;
-
-    default:
-      return state;
-  }
-}
-
-function createSubscriberLink({ observableId, operatorId }) {
-  // needs to be linked to the store
-  return (store) => {
-    const state = store.getState();
-    const observable = state.observables.find((obs) => obs.id == observableId);
-    const operatorState = state.operatorStates.find(
-      (operator) => operator.id == observable.operatorId,
-    );
-
-    const subscriber = {
-      next: (value) => {
-        const observable = store
-          .getState()
-          .observables.find((obs) => obs.id == observableId);
-
-        const operatorState = store
-          .getState()
-          .operatorStates.find(
-            (operator) => operator.id == observable?.operatorId,
-          );
-
-        if (operatorState.currentObservableId === observable.id) {
-          store.dispatch({
-            type: "HANDLE-EMISSION",
-            observableId: observable.id,
-            emittedValue: value,
-            next: operatorState.next,
-          });
-        }
-      },
-      complete: () => {
-        store.dispatch({
-          type: "HANDLE-OBSERVABLE-COMPLETE(switchAll)",
-          observableId: observableId,
-          operatorId: operatorId,
-        });
-      },
-    };
-    return subscriber;
-  };
+    },
+    getCompleteCondition: (state) => {
+      const thisOperator = state.operatorStates?.[0];
+      return thisOperator.currentObservableId === null;
+    },
+    state,
+    action,
+    thisOperator,
+    operatorType: "switchAll",
+  });
 }

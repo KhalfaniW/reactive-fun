@@ -31,6 +31,7 @@ export function createOperator({
   initOperatorAction,
   complete,
   operatorComplete = null,
+  label = undefined,
   // id = null,
 } = {}) {
   return (observable) => {
@@ -57,7 +58,7 @@ export function createOperator({
       const observableComplete = () => {
         //add store to operator complete
         const originalFinalCompleteFunctionReference =
-          originalSubscriber.destination.partialObserver.complete;
+          originalSubscriber.destination.partialObserver?.complete;
         if (originalFinalCompleteFunctionReference) {
           originalSubscriber.destination.partialObserver.complete = () => {
             originalFinalCompleteFunctionReference(currentOperatorStore);
@@ -78,6 +79,13 @@ export function createOperator({
         ...initOperatorAction,
         next: originalNext,
       });
+
+      if (label) {
+        currentOperatorStore.dispatch({
+          type: "ADD-OPERATOR-LABEL",
+          label,
+        });
+      }
 
       const sourceObservableSubscriber = observable.subscribe({
         //the subscribed observable will emit even if the operator completes

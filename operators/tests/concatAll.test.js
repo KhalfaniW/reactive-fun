@@ -2,14 +2,14 @@ import { cleanState } from "./utils/index.js";
 import { Observable } from "rxjs";
 import _ from "lodash";
 
-import { mergeAll } from "../mergeAll.js";
+import { concatAll } from "../concatAll.js";
 import { makeStoreWithExtra } from "../redux/store.js";
 
 const { getState, dispatch } = makeStoreWithExtra();
 
-test("concatAll using mergeAll concurrency 1", (done) => {
+test("concatAll using concatAll concurrency 1", (done) => {
   getHigherOrderObservable()
-    .pipe(mergeAll({ concurrentLimit: 1 }))
+    .pipe(concatAll())
     .subscribe({
       next: (value) => {},
       complete: ({ getState }) => {
@@ -85,7 +85,7 @@ const endState = {
   ],
   operatorStates: [
     {
-      type: "mergeAll",
+      label: "concatAll",
       isCompleted: true,
       next: "[Function]",
       concurrentLimit: 1,

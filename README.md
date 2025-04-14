@@ -1,6 +1,6 @@
 ### What
 
-Recreatee rxJS toosl using funcitona programmignto get funciotnal beneftis
+Recreate RxJS tools using functional programming to get functional benefits
 
 Priorities:
 
@@ -11,10 +11,10 @@ Priorities:
 
 - time travel debugging
 
-- [x] serliziable inspectable state
+- [x] serializable inspectable state
 - easier testing
   - create tests easily printing out state and comparing it in future tests
-  - ability to inject into the middle of exection with mocks/spies and run test assertions in middle of program
+  - ability to inject into the middle of execution with mocks/spies and run test assertions in middle of program
     For example, you can check if 2 observables are completed and inspect the state a 3rd observable
 
 Maybe
@@ -23,29 +23,31 @@ Maybe
 
 ## Why
 
-    The RxJS library is  not functinoal programmign at its core.
+    The RxJS library is not functional programming at its core.
 
-    RxJS uses a composoitino observables and operators to
+    RxJS uses a composition of observables and operators to
 
-    The defniiton of an obesrable is a stateful, side effect createing object.
+    The definition of an observable is a stateful, side effect creating object.
 
 
-    Many operaters are side effect creating at their like  delay(),  and debounceTime are only side effects
+    Many operators are side effect creating at their core like delay(), and debounceTime are only side effects
 
-    Many other operatiors like scan() and take have state hidden in closures
+    Many other operators like scan() and take have state hidden in closures
 
 ## How
 
-- single source of truth; 1 mutaing stat
+- single source of truth; 1 mutating state
+
+- this adds a state variable to observables when using an operator,
+- it passes state down when you compose it with another operator
 
 ### Observables
 
-    Obervables by definint craete side effects.  Things like interval() and fromEvent() cannot be pure because of whaat they intend to do.
+    Observables by definition create side effects. Things like interval() and fromEvent() cannot be pure because of what they intend to do.
 
-     Utilties like merge, concat and mergeAll should not create obsevables because that crates more imperceptible state because of more obserbles
+    Utilities like merge, concat and mergeAll should not create observables because that creates more imperceptible state because of more observables
 
 ## do
 
     - ~~change state to not be optimistic~~
        ~~only change state after effect~~
-

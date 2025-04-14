@@ -1,4 +1,12 @@
 import { combineReducers, createStore, applyMiddleware } from "redux";
+import { produce } from "immer";
+
+// Define a more complete initial state based on usage in the reducer
+const initialState = {
+  emittedValues: [],
+  isCompleted: false,
+  isStarted: false,
+};
 
 // TODO refactor to have observables and state be more like observable struct with state in the statemachine
 // maybe make subcription details serialiable
@@ -7,92 +15,92 @@ import { combineReducers, createStore, applyMiddleware } from "redux";
    operatorId: "MergeAllOperator_{nanoID}" | null
 */
 /*
-expected derived state =
-mergeSubsriberState: {
-isCompleted: false,
-bufferedObervableIds: [],
-runningObservables: [],
-activeCount: 0,
-concurrentLimit: Infinity,
-},
- */
+  expected derived state =
+  mergeSubsriberState: {
+  isCompleted: false,
+  bufferedObervableIds: [],
+  runningObservables: [],
+  activeCount: 0,
+  concurrentLimit: Infinity,
+  },
+*/
+export function mainReducer(state = initialState, action) {
+  // Use produce, passing the current state and a function that receives a mutable 'draft'
+  return produce(state, (draft) => {
+    // Inside this function, you can directly modify the 'draft' object
+    switch (action.type) {
+      case "INIT":
+        draft.isStarted = true;
+        draft.operatorStates = [];
+        draft.complete = action.complete;
+        draft.observables = action.observables;
+        break;
 
-export function mainReducer(
-  state = { emittedValues: [], isCompleted: false, isStarted: false },
-  action,
-) {
-  //TODO make clearing effect object a swtich case so it can collect multiple effects
+      case "CLEAR-EFFECTS":
+        draft.effectObject = null;
+        break;
 
-  switch (action.type) {
-    case "INIT":
-      return {
-        ...state,
-        isStarted: true,
-        operatorStates: [],
-        //final subcriber
-        complete: action.complete,
-        observables: action.observables,
-      };
-    case "CLEAR-EFFECTS":
-      return {
-        ...state,
-        effectObject: null,
-      };
-    case "HANDLE-EMISSION":
-      return {
-        ...state,
-        emittedValues: state.emittedValues.concat({
+      case "HANDLE-EMISSION":
+        // Use push for arrays - more idiomatic Immer style
+        draft.emittedValues.push({
           id: action.observableId,
           emittedValue: action.emittedValue,
-        }),
-        effectObject: {
+        });
+        draft.effectObject = {
           type: "EMIT",
           next: action.next,
           emittedValue: action.emittedValue,
-        },
-      };
+        };
+        break;
 
-    case "HANDLE-OPERATOR-COMPLETE":
-      const operatorStatesWithThisCompleted = state.operatorStates.map(
-        (operatorState) => {
-          const extraState =
-            operatorState.type == "switchAll"
-              ? { currentObservableId: null }
-              : {};
-          return operatorState.id === action.operatorId
-            ? {
-                ...operatorState,
-                isCompleted: true,
-                ...extraState,
-              }
-            : operatorState;
-        },
-      );
+      case "ADD-OPERATOR-LABEL":
+        if (draft.operatorStates && draft.operatorStates.length > 0) {
+          draft.operatorStates[0].label = action.label;
+        } else {
+          console.warn(
+            "ADD-OPERATOR-LABEL: operatorStates array is empty or missing.",
+          );
+        }
+        break;
 
-      const updatedState = {
-        ...state,
-        operatorStates: operatorStatesWithThisCompleted,
-      };
+      case "HANDLE-OPERATOR-COMPLETE":
+        const operatorIndex = draft.operatorStates.findIndex(
+          (opState) => opState.id === action.operatorId,
+        );
 
-      return {
-        ...updatedState,
-        effectObject: {
+        if (operatorIndex !== -1) {
+          const operatorState = draft.operatorStates[operatorIndex];
+          operatorState.isCompleted = true;
+          // Handle extra state based on type
+          if (operatorState.type === "switchAll") {
+            operatorState.currentObservableId = null;
+          }
+        } else {
+          // Optional: Handle case where operatorId is not found
+          console.warn(
+            `Operator with id ${action.operatorId} not found for completion.`,
+          );
+        }
+        draft.effectObject = {
           type: "COMPLETE_STATE",
-        },
-      };
+        };
+        break;
 
-    case "PARENT-COMPLETE":
-      return {
-        ...state,
-        isParentComplete: true,
-      };
+      case "PARENT-COMPLETE":
+        draft.isParentComplete = true;
+        break;
 
-    case "ALL-COMPLETE":
-      return { ...state, isCompleted: true };
-      break;
-  }
-  return state;
+      case "ALL-COMPLETE":
+        draft.isCompleted = true;
+        break;
+      default:
+        break;
+    }
+
+
+  });
 }
+
 
 export function subscriptionReducer(state, action) {
   const draftState = { ...state };

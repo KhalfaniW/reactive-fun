@@ -79,7 +79,7 @@ export function makeMainStore() {
                 operatorStore,
               );
               events.push({
-                event: operatorState.effectObject,
+                effect: operatorState.effectObject,
                 id: action.id,
                 time: Date.now() - startTime,
               });
@@ -87,7 +87,7 @@ export function makeMainStore() {
           } else {
             runEffects(operatorState, operatorStore.dispatch, operatorStore);
             events.push({
-              event: operatorState.effectObject,
+              effect: operatorState.effectObject,
               id: action.id,
               time: Date.now() - startTime,
             });

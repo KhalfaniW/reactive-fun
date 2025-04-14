@@ -20,7 +20,7 @@ tmp-*
 *.tmp
 *.temp
 *.swp
-
+*.~*
 # Ignore IDE specific files
 .#*
 .vscode/

@@ -1,3 +1,5 @@
+import { highOrderOperate } from "./utils/highOrderOperate";
+
 /**
  * @typedef {Object} StateObject
  * @property {boolean} hasCompleted - Indicates whether the process has been completed.
@@ -11,7 +13,6 @@
  * @param {StateObject} state - The state object containing completion status, buffer, and active index.
  * @param {Object} action
  */
-
 export function exhaustAllReducer(
   state = {
     operatorStates: [],
@@ -22,88 +23,76 @@ export function exhaustAllReducer(
 ) {
   const thisOperator = state.operatorStates && state.operatorStates[0];
 
-  switch (action.type) {
-    case "INIT(exhaustAll)":
+  return highOrderOperate({
+    initState: {
+      isCompleted: false,
+      currentObservableId: null,
+    },
+    makeSubscriber: ({
+      getState,
+      dispatch,
+      state,
+      observable,
+      operatorState,
+      operatorType,
+    }) => {
       return {
-        ...state,
-        operatorStates: (state.operatorStates || []).concat({
-          type: "exhaustAll",
-          id: action.operatorId,
-          isCompleted: false,
-          next: action.next,
-          currentObservableId: null,
-        }),
+        next: (value) => {
+          dispatch({
+            type: "HANDLE-EMISSION",
+            observableId: observable.id,
+            emittedValue: value,
+            next: operatorState.next,
+          });
+        },
+        complete: () => {
+          dispatch({
+            type: `HANDLE-OBSERVABLE-COMPLETE(${operatorType})`,
+            observableId: observable.id,
+            operatorId: observable?.operatorId,
+          });
+        },
       };
-    case "HANDLE-NEW-OBSERVABLE(exhaustAll)":
+    },
+    handleNewObservable: ({
+      state,
+      operatorType,
+      createSubscriberLink,
+      makeSubscriber,
+    }) => {
       const noCurrentSubscription = thisOperator.currentObservableId === null;
-      if (noCurrentSubscription) {
-        return {
-          ...state,
-          observables: state.observables.concat({
-            ...action.newObservable,
-            operatorId: action.operatorId,
-          }),
-          effectObject: [
+      const newObservables = state.observables.concat({
+        ...action.newObservable,
+        operatorId: action.operatorId,
+      });
+      const newEffect = noCurrentSubscription
+        ? [
             {
               type: "SUBSCRIBE-EFFECT",
               observableId: action.newObservable.id,
               operatorId: action.operatorId,
+
               createSubscriber: createSubscriberLink({
                 observableId: action.newObservable.id,
                 operatorId: action.operatorId,
+                operatorType,
+                makeSubscriber,
               }),
             },
-          ],
-        };
-      }
+          ]
+        : state.effectObject;
+
       return {
         ...state,
-        observables: state.observables.concat({
-          ...action.newObservable,
-          operatorId: action.operatorId,
-        }),
+        observables: newObservables,
+        effectObject: newEffect,
       };
+    },
 
-    case "OBSERVABLE-COMPLETE(exhaustAll)":
-      return {
-        ...state,
-        operatorStates: state.operatorStates.map((operator) =>
-          operator.id == thisOperator.id
-            ? {
-                ...operator,
-                currentObservableId: null,
-              }
-            : operator,
-        ),
-        observables: state.observables.map((observable) =>
-          observable.id === action.observableId
-            ? {
-                ...observable,
-                observeState: "COMPLETED",
-              }
-            : observable,
-        ),
-      };
-
-    case "PARENT-COMPLETE":
-      if (thisOperator.type !== "exhaustAll") {
-        return state;
-      }
-      if (thisOperator.currentObservableId === null) {
-        return {
-          ...state,
-          effectObject: {
-            type: "COMPLETE-OPERATOR",
-            operatorId: action.operatorId,
-          },
-        };
-      }
-      return state;
-
-    case "HANDLE-OBSERVABLE-COMPLETE(exhaustAll)":
+    handleComplete: ({ operatorType, action }) => {
       const updatedState = exhaustAllReducer(state, {
         ...action,
-        type: "OBSERVABLE-COMPLETE(exhaustAll)",
+        type: `OBSERVABLE-COMPLETE(${operatorType})`,
       });
 
       if (state.isParentComplete) {
@@ -116,38 +105,14 @@ export function exhaustAllReducer(
         };
       }
       return updatedState;
-
-    default:
-      return state;
-  }
-}
-
-function createSubscriberLink({ observableId, operatorId }) {
-  return (store) => {
-    const state = store.getState();
-    const observable = state.observables.find((obs) => obs.id == observableId);
-    const operatorState = state.operatorStates.find(
-      (operator) => operator.id == observable.operatorId,
-    );
-    const dispatch = store.dispatch;
-    const subscriber = {
-      next: (value) => {
-        dispatch({
-          type: "HANDLE-EMISSION",
-          observableId: observable.id,
-          emittedValue: value,
-          next: operatorState.next,
-        });
-      },
-      complete: () => {
-        dispatch({
-          type: "HANDLE-OBSERVABLE-COMPLETE(exhaustAll)",
-          observableId: observable.id,
-          operatorId: observable?.operatorId,
-        });
-      },
-    };
-
-    return subscriber;
-  };
+    },
+    getCompleteCondition: (state) => {
+      const thisOperator = state.operatorStates?.[0];
+      return thisOperator.currentObservableId === null;
+    },
+    state,
+    action,
+    thisOperator,
+    operatorType: "exhaustAll",
+  });
 }

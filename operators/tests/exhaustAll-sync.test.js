@@ -1,0 +1,75 @@
+import { cleanState } from "./utils/index.js";
+import { Observable } from "rxjs";
+import _ from "lodash";
+
+import { exhaustAll } from "../exhaustAll.js";
+import { mergeAll } from "../mergeAll.js";
+
+test("testing exhaustAll run all sync", (done) => {
+  getHigherOrderObservable()
+    .pipe(exhaustAll())
+    .subscribe({
+      complete: ({ getState }) => {
+        try {
+          expect(cleanState(getState())).toMatchObject(endState);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      },
+    });
+});
+
+function getHigherOrderObservable() {
+  return new Observable((subscriber) => {
+    const [obs1, obs2, obs3] = getObservables();
+    subscriber.next(obs1);
+    subscriber.next(obs2);
+    subscriber.next(obs3);
+    subscriber.complete();
+  });
+}
+function getObservables() {
+  const obs1 = new Observable((subscriber) => {
+    subscriber.next(1);
+    subscriber.next(2);
+    subscriber.next(3);
+    subscriber.complete();
+  });
+
+  const obs2 = new Observable((subscriber) => {
+    subscriber.next(4);
+    subscriber.next(5);
+    subscriber.next(6);
+    subscriber.complete();
+  });
+
+  const obs3 = new Observable((subscriber) => {
+    subscriber.next(8);
+    subscriber.next(9);
+    subscriber.complete();
+  });
+
+  return [obs1, obs2, obs3];
+}
+const endState = {
+  emittedValues: [
+    { id: 0, emittedValue: 1 },
+    { id: 0, emittedValue: 2 },
+    { id: 0, emittedValue: 3 },
+    { id: 1, emittedValue: 4 },
+    { id: 1, emittedValue: 5 },
+    { id: 1, emittedValue: 6 },
+    { id: 2, emittedValue: 8 },
+    { id: 2, emittedValue: 9 },
+  ],
+  isCompleted: true,
+  isStarted: true,
+  effectObject: null,
+  observables: [
+    { subscribe: "[Function]", id: 0, observeState: "COMPLETED" },
+    { subscribe: "[Function]", id: 1, observeState: "COMPLETED" },
+    { subscribe: "[Function]", id: 2, observeState: "COMPLETED" },
+  ],
+  operatorStates: [{ type: "exhaustAll", isCompleted: true }],
+};
