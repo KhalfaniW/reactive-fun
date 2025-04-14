@@ -36,7 +36,7 @@ test("testing tap", (done) => {
             emittedValues: [{ emittedValue: 10 }],
             isCompleted: false,
             isStarted: true,
-            isParentComplete: true,
+            isSourceComplete: true,
             effectObject: null,
             operatorStates: [{ type: "tap", next: "[Function]" }],
             complete: "[Function]",

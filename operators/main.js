@@ -86,8 +86,8 @@ export function mainReducer(state = initialState, action) {
         };
         break;
 
-      case "PARENT-COMPLETE":
-        draft.isParentComplete = true;
+      case "SOURCE-COMPLETE":
+        draft.isSourceComplete = true;
         break;
 
       case "ALL-COMPLETE":

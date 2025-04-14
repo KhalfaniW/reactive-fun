@@ -75,7 +75,7 @@ const endState = {
   ],
   isCompleted: true,
   isStarted: true,
-  isParentComplete: true,
+  isSourceComplete: true,
   effectObject: null,
   complete: "[Function]",
   observables: [

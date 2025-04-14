@@ -54,7 +54,7 @@ test("testing tap composed", (done) => {
               ],
               complete: "[Function]",
               observables: [],
-              isParentComplete: true,
+              isSourceComplete: true,
             },
             2: {
               complete: "[Function]",
@@ -70,7 +70,7 @@ test("testing tap composed", (done) => {
                 },
               ],
               isCompleted: false,
-              isParentComplete: true,
+              isSourceComplete: true,
               isStarted: true,
               observables: [],
               operatorStates: [

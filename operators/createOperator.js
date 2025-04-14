@@ -93,7 +93,8 @@ export function createOperator({
         next: newNext(currentOperatorStore),
         complete: () => {
           currentOperatorStore.dispatch({
-            type: "PARENT-COMPLETE",
+            type: "SOURCE-COMPLETE",
+            observable,
           });
         },
       });

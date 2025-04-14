@@ -22,7 +22,7 @@ export function takeReducer(state, action) {
         }
         break;
 
-      case "PARENT-COMPLETE":
+      case "SOURCE-COMPLETE":
         if (thisOperator.type === "take") {
           draft.effectObject = {
             type: "COMPLETE-OPERATOR",

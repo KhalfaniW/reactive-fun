@@ -62,7 +62,7 @@ export function highOrderOperate({
         return handleComplete({ operatorType, action,state:draft,createSubscriberLink,makeSubscriber });
         break;
 
-      case "PARENT-COMPLETE":
+      case "SOURCE-COMPLETE":
         if (thisOperator.type !== operatorType) {
           return;
         }

@@ -147,7 +147,7 @@ export function mergeAllReducer(
       }
 
       const isEverythingFinished =
-        !nextBuffered && runningCount === 0 && state.isParentComplete;
+        !nextBuffered && runningCount === 0 && state.isSourceComplete;
 
       if (isEverythingFinished) {
         return {

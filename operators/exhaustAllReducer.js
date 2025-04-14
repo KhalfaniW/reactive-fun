@@ -95,7 +95,7 @@ export function exhaustAllReducer(
         type: `OBSERVABLE-COMPLETE(${operatorType})`,
       });
 
-      if (state.isParentComplete) {
+      if (state.isSourceComplete) {
         return {
           ...updatedState,
           effectObject: {

@@ -131,7 +131,7 @@ export function switchAllReducer(
         type: `OBSERVABLE-COMPLETE(${operatorType})`,
       });
 
-      if (updatedState.isParentComplete) {
+      if (updatedState.isSourceComplete) {
         return {
           ...updatedState,
           effectObject: {

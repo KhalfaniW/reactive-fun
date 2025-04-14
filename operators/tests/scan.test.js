@@ -36,7 +36,7 @@ const endState = {
   ],
   isCompleted: true,
   isStarted: true,
-  isParentComplete: true,
+  isSourceComplete: true,
   effectObject: null,
   operatorStates: [{ type: "scan", value: 6 }],
   complete: "[Function]",

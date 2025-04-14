@@ -22,7 +22,7 @@ export function operate({
         ];
         break;
 
-      case "PARENT-COMPLETE":
+      case "SOURCE-COMPLETE":
         if (thisOperator.type === operatorType) {
           draft.effectObject = {
             type: "COMPLETE-OPERATOR",

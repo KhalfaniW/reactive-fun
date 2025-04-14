@@ -82,7 +82,7 @@ test("testing tap composed", (done) => {
             ],
             complete: "[Function]",
             observables: [],
-            isParentComplete: true,
+            isSourceComplete: true,
           },
           1: {
             emittedValues: [
@@ -101,7 +101,7 @@ test("testing tap composed", (done) => {
             ],
             complete: "[Function]",
             observables: [],
-            isParentComplete: true,
+            isSourceComplete: true,
           },
         });
         done();

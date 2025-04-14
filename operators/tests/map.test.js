@@ -34,7 +34,7 @@ const expected_EndState_ = {
   ],
   isCompleted: true,
   isStarted: true,
-  isParentComplete: true,
+  isSourceComplete: true,
   effectObject: null,
   operatorStates: [{ type: "map", mapIndex: 2 }],
   complete: "[Function]",
