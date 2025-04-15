@@ -14,45 +14,46 @@ export function repeatReducer(state, action) {
     operatorId: action.operatorId,
   });
 
-  if (action.type === "SOURCE_COMPLETE" && thisOperator?.count > 1) {
+  if (action.type === "SOURCE-COMPLETE" && thisOperator?.count > 1) {
     return {
-      state,
-      operatorStates: {
-        ...state.operatorStates,
-        count: thisOperator.count - 1,
-      },
+      ...state,
+      operatorStates: [
+        {
+          ...state.operatorStates[0],
+          count: thisOperator.count - 1,
+        },
+      ],
       effectObject: [
         {
-          type: "RESUBSCRIBE",
-          createSubscriber: ({ getState, dispatch }) => {
-            return {
-              next: (value) => {
-                thisOperator.sourceNext(value);
-              },
-              complete: () => {
-                dispatch({
-                  type: "SOURCE-COMPLETE",
-              //    observable: thisOperator.sourceObservable,
-                });
-              },
-            };
-          },
+          type: "RESUBSCRIBE-TO-SOURCE",
+          resubscribe: thisOperator.resubscribe,
+        },
+      ],
+    };
+  }
+  let newState = state;
+  if (action.type === "SOURCE-COMPLETE" && thisOperator?.count == 1) {
+    newState = {
+      ...state,
+      operatorStates: [
+        {
+          ...state.operatorStates[0],
+          count: 0,
         },
       ],
     };
   }
   //  return state
   return operate({
-    onInit: ({state, action}) => {
+    onInit: ({ state, action }) => {
       return {
-        count: action.count, 
-        sourceNext: action.sourceNext,
-       sourceObservable: action.sourceObservable,
+        count: action.count,
+        resubscribe: action.resubscribe,
       };
     },
 
     initState: {},
-    state,
+    state: newState,
     action,
     thisOperator,
     operatorType: "repeat",

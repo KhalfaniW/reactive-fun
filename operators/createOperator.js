@@ -79,6 +79,17 @@ export function createOperator({
         next: originalNext,
         sourceObservable: observable,
         sourceNext: newNext(currentOperatorStore),
+        resubscribe: () => {
+          observable.subscribe({
+            next: newNext(currentOperatorStore),
+            complete: () => {
+              currentOperatorStore.dispatch({
+                type: "SOURCE-COMPLETE",
+                observable,
+              });
+            },
+          });
+        },
         ...initOperatorAction,
       });
 

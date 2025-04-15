@@ -82,12 +82,15 @@ export function mainReducer(state = initialState, action) {
           );
         }
         draft.effectObject = {
-          type: "COMPLETE_STATE",
+          type: "COMPLETE-STATE",
         };
         break;
 
       case "SOURCE-COMPLETE":
         draft.isSourceComplete = true;
+        break;
+      case "SOURCE-RESUBSCRIBE":
+        draft.isSourceComplete = false;
         break;
 
       case "ALL-COMPLETE":
@@ -212,7 +215,7 @@ export function subscriptionReducer(state, action) {
           effectObject:
             completedObservables.length == state.observables.length
               ? {
-                  type: "COMPLETE_STATE",
+                  type: "COMPLETE-STATE",
                 }
               : null,
         };
@@ -231,7 +234,7 @@ export function subscriptionReducer(state, action) {
           effectObject:
             completedObservables.length == state.observables.length
               ? {
-                  type: "COMPLETE_STATE",
+                  type: "COMPLETE-STATE",
                 }
               : null,
         };

@@ -41,7 +41,7 @@ export function runEffects(state, dispatch_, store) {
     ) || state.operatorStates[0];
 
   switch (state.effectObject.type) {
-    case "COMPLETE_STATE":
+    case "COMPLETE-STATE":
       dispatch({ type: "ALL-COMPLETE" });
       state.complete(store);
       break;
@@ -91,23 +91,12 @@ export function runEffects(state, dispatch_, store) {
       }
       break;
 
-    case "RESUBSCRIBE":
+    case "RESUBSCRIBE-TO-SOURCE":
       dispatch({
-        type: "SUBSCRIPTION-START-1",
-        observableId: observable.id,
-        operatorId: state.effectObject.operatorId,
+        type: "SOURCE-RESUBSCRIBE",
       });
-      const subcribeReturnValue2 = observable.subscribe(
-        state.effectObject.createSubscriber(store),
-      );
 
-      if (typeof subcribeReturnValue2 === "function") {
-        dispatch({
-          type: "SET-UNSUBSCRIBE",
-          observableId: observable.id,
-          unsubscribe: subcribeReturnValue,
-        });
-      }
+      state.effectObject.resubscribe();
       break;
 
     default:
