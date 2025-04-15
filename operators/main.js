@@ -105,7 +105,8 @@ export function mainReducer(state = initialState, action) {
 export function subscriptionReducer(state, action) {
   const draftState = { ...state };
   //TODO seperate merge and switch Subscriptions cancel
-  const isMERGE = JSON.stringify(state).includes("merge");
+
+  const isMERGE = !state.operatorStates?.[0]?.sourceObservable && JSON.stringify(state).includes("merge");
   switch (action.type) {
     case "SET-UNSUBSCRIBE":
       return {

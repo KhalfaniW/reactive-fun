@@ -76,8 +76,10 @@ export function createOperator({
         observables: [],
       });
       currentOperatorStore.dispatch({
-        ...initOperatorAction,
         next: originalNext,
+        sourceObservable: observable,
+        sourceNext: newNext(currentOperatorStore),
+        ...initOperatorAction,
       });
 
       if (label) {
@@ -99,6 +101,7 @@ export function createOperator({
         },
       });
     });
+
     newObservable.mainStore = mainStore;
     return newObservable;
   };

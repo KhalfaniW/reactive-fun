@@ -6,6 +6,7 @@ import { scanReducer } from "../scanReducer.js";
 import { takeReducer } from "../takeReducer.js";
 import { mapReducer } from "../mapReducer.js";
 import { tapReducer } from "../tapReducer.js";
+import { repeatReducer } from "../repeatReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
 
 export const asyncDispatchMiddleware = (store) => (next) => (action) => {
@@ -43,6 +44,7 @@ export const stateReducer = (initialState, action) =>
     scanReducer,
     switchAllReducer,
     mapReducer,
+    repeatReducer,
     takeReducer,
     tapReducer,
     exhaustAllReducer,

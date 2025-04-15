@@ -71,7 +71,7 @@ export function runEffects(state, dispatch_, store) {
       break;
     case "SUBSCRIBE-EFFECT":
       validateIfSubscribable(observable);
-      //state needs to update go before actually subscribing because sometiems the observable/subscriber needs to
+      //state needs to update go before actually subscribing because sometimes the observable/subscriber needs to
       //check the currently subscribed entity for calcuations
       dispatch({
         type: "SUBSCRIPTION-START-1",
@@ -83,6 +83,25 @@ export function runEffects(state, dispatch_, store) {
       );
 
       if (typeof subcribeReturnValue === "function") {
+        dispatch({
+          type: "SET-UNSUBSCRIBE",
+          observableId: observable.id,
+          unsubscribe: subcribeReturnValue,
+        });
+      }
+      break;
+
+    case "RESUBSCRIBE":
+      dispatch({
+        type: "SUBSCRIPTION-START-1",
+        observableId: observable.id,
+        operatorId: state.effectObject.operatorId,
+      });
+      const subcribeReturnValue2 = observable.subscribe(
+        state.effectObject.createSubscriber(store),
+      );
+
+      if (typeof subcribeReturnValue2 === "function") {
         dispatch({
           type: "SET-UNSUBSCRIBE",
           observableId: observable.id,
