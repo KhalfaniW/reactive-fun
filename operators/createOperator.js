@@ -25,6 +25,14 @@ Object.defineProperty(Observable.prototype, "mainStore", {
   },
 });
 
+Observable.prototype.toJSON = function () {
+  return {
+    subscribe: "[Function]",
+    id: this.id,
+   // m: this._mainStore,
+  };
+};
+
 export function createOperator({
   type,
   newNext,
