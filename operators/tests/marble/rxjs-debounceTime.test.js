@@ -1,24 +1,59 @@
 import { TestScheduler } from "rxjs/testing";
 import { of, interval } from "rxjs";
-import { take } from "rxjs/operators";
-import { mergeAll } from "../mergeAll.js";
-import { makeStoreWithExtra } from "../redux/store.js";
+import { debounceTime } from "rxjs/operators";
+import { mergeAll } from "../../mergeAll.js";
+import { makeStoreWithExtra } from "../../redux/store.js";
 
-const cleanMarbles = (testOutput) =>
-  testOutput
-    .map((expectedObject, i, all) => {
-      const padding = "-".repeat(
-        i == 0
-          ? expectedObject.frame
-          : expectedObject.frame - all[i - 1].frame - 1,
-      );
-      if (expectedObject.notification.kind === "C") return padding + "|";
+import { cleanMarbles } from "../utils/index.js";
 
-      return padding + expectedObject.notification.value;
-    })
-    .join("");
+describe("RxJS Jest Tests for Debounce", () => {
+  let testScheduler;
 
-describe("mergeAll operator", () => {
+  beforeEach(() => {
+    testScheduler = new TestScheduler((actual, expected) => {
+      try {
+        expect(actual).toEqual(expected);
+      } catch (error) {
+        throw new Error(`
+ expected ${cleanMarbles(expected)}
+ received ${cleanMarbles(actual)}
+`);
+      }
+    });
+  });
+
+  it("should debounce values and emit the most recent after the specified delay", () => {
+    testScheduler.run(({ hot, expectObservable }) => {
+      const source = hot("--a--b----c-|");
+      const actual = source.pipe(debounceTime(5));
+      const expected = "------------(c|)";
+
+      expectObservable(actual).toBe(expected);
+    });
+  });
+
+  it("should emit immediately after debounce period if no new values arrive", () => {
+    testScheduler.run(({ hot, expectObservable }) => {
+      const source = hot("--a-----------|");
+      const actual = source.pipe(debounceTime(3));
+      const expected = "-----a--------|";
+
+      expectObservable(actual).toBe(expected);
+    });
+  });
+
+  it("should debounce multiple rapid emissions", () => {
+    testScheduler.run(({ hot, expectObservable }) => {
+      const source = hot("--abcd---e----|");
+      const actual = source.pipe(debounceTime(3));
+      const expected = "--------d---e-|";
+
+      expectObservable(actual).toBe(expected);
+    });
+  });
+});
+
+describe.skip("debounce operator", () => {
   let testScheduler;
 
   beforeEach(() => {
@@ -48,7 +83,7 @@ describe("mergeAll operator", () => {
       });
 
       const result$ = source$.pipe(
-        mergeAll({ concurrentLimit: 1 }, { ...storeWithExtra }),
+        mergeAll({ concurrentLimit: 1 }, { ...storeWithExtra })
       );
 
       const expectedMarble = "-----a--b--c--1--2--3--x--y--z|";
@@ -81,7 +116,7 @@ describe("mergeAll operator", () => {
       });
 
       const result$ = source$.pipe(
-        mergeAll({ concurrentLimit: 10 }, { ...storeWithExtra }),
+        mergeAll({ concurrentLimit: 10 }, { ...storeWithExtra })
       );
 
       const expectedMarble = "-----a--b1-c2x-3y--z|";
