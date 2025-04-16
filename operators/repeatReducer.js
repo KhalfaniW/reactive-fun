@@ -1,7 +1,7 @@
 import { operate } from "./utils/operate";
 
 export function repeatReducer(state, action) {
-  const thisOperator = state.operatorStates && state.operatorStates[0];
+  const thisOperator = state.operatorStates?.[0];
 
   const handleEmission = ({ state, thisOperator, action }) => {
     return {
@@ -13,7 +13,9 @@ export function repeatReducer(state, action) {
     ...action.newObservable,
     operatorId: action.operatorId,
   });
-
+  if (thisOperator && thisOperator?.type !== "repeat") {
+    return state;
+  }
   if (action.type === "SOURCE-COMPLETE" && thisOperator?.count > 1) {
     return {
       ...state,
