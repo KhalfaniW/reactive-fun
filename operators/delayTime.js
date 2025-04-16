@@ -4,7 +4,7 @@ import { mergeMap } from "./mergeMap";
 import { map } from "./map";
 
 
-export function delay(delayTime) {
+export function delayTime(delayTime) {
   return (source$) => {
     return source$.pipe(
       mergeMap((value) => timer(delayTime).pipe(map(() => value))),
