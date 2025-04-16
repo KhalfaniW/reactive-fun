@@ -68,6 +68,6 @@ export const addDispatchContext = (store) => (next) => (action) => {
   } catch (dispatchOriginError) {
     stackTraceOrigin = () => dispatchOriginError.stack.split("\n").slice(2);
   }
-  const newAction = { ...action, stackTraceOrigin };
+  const newAction = { ...action, stackTraceOrigin, time: Date.now() };
   return next(newAction);
 };
