@@ -26,7 +26,7 @@ describe("RxJS Jest Tests for Debounce", () => {
     testScheduler.run(({ hot, expectObservable }) => {
       const source = hot("--a--b----c-|");
       const actual = source.pipe(debounceTime(5));
-      const expected = "------------(c|)";
+      const expected = "  ------------(c|)";
 
       expectObservable(actual).toBe(expected);
     });
@@ -36,7 +36,7 @@ describe("RxJS Jest Tests for Debounce", () => {
     testScheduler.run(({ hot, expectObservable }) => {
       const source = hot("--a-----------|");
       const actual = source.pipe(debounceTime(3));
-      const expected = "-----a--------|";
+      const expected = "  -----a--------|";
 
       expectObservable(actual).toBe(expected);
     });
@@ -46,7 +46,7 @@ describe("RxJS Jest Tests for Debounce", () => {
     testScheduler.run(({ hot, expectObservable }) => {
       const source = hot("--abcd---e----|");
       const actual = source.pipe(debounceTime(3));
-      const expected = "--------d---e-|";
+      const expected = "  --------d---e-|";
 
       expectObservable(actual).toBe(expected);
     });
