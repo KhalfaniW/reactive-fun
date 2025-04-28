@@ -9,6 +9,7 @@ import { tapReducer } from "../tapReducer.js";
 import { repeatReducer } from "../repeatReducer.js";
 import { reduceReducer } from "../reduceReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
+import { filterReducer } from "../filterReducer.js";
 
 export const asyncDispatchMiddleware = (store) => (next) => (action) => {
   let syncActivityFinished = false;
@@ -50,6 +51,7 @@ export const stateReducer = (initialState, action) =>
     tapReducer,
     exhaustAllReducer,
     reduceReducer,
+    filterReducer,
   ].reduce(
     (currentState, reducer) => reducer(currentState, action),
     initialState,

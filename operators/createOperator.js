@@ -29,7 +29,8 @@ Observable.prototype.toJSON = function () {
   return {
     subscribe: "[Function]",
     id: this.id,
-   // m: this._mainStore,
+    type: "observable",
+    // m: this._mainStore,
   };
 };
 

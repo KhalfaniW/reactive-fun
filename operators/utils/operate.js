@@ -48,13 +48,14 @@ export function operate({
         break;
 
       case `HANDLE-EMISSION(${operatorType})`:
-        const delta = onEmmision({
-          thisOperator,
-          draft,
-          state,
-          action,
-          emit: (newValue) => {},
-        });
+        const delta =
+          onEmmision({
+            thisOperator,
+            draft,
+            state,
+            action,
+            emit: (newValue) => {},
+          }) || {};
 
         if (delta.operatorDelta) {
           const operator = draft.operatorStates[0];
