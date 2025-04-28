@@ -1,6 +1,4 @@
-import { Observable, timer } from "rxjs";
-import { createOperator } from "./createOperator.js";
-
+import { timer } from "rxjs";
 import { switchAll } from "./switchAll";
 import { map } from "./map";
 
