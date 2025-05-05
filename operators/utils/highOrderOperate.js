@@ -14,7 +14,6 @@ export function highOrderOperate({
   handleNewObservable,
   getCompleteCondition,
 }) {
-
   return produce(state, (draft) => {
     switch (action.type) {
       case `INIT(${operatorType})`:
@@ -39,11 +38,12 @@ export function highOrderOperate({
 
         break;
       case `OBSERVABLE-COMPLETE(${operatorType})`:
-        for (let operator of draft.operatorStates) {
-          if (operator.id === thisOperator.id) {
-            operator.currentObservableId = null;
-          }
+        const operator = draft.operatorStates[0];
+
+        if (operator.currentObservableId === action.observableId) {
+          operator.currentObservableId = null;
         }
+
         for (let observable of draft.observables) {
           if (observable.id === action.observableId) {
             observable.observeState = "COMPLETED";
@@ -59,7 +59,13 @@ export function highOrderOperate({
         break;
 
       case `HANDLE-OBSERVABLE-COMPLETE(${operatorType})`:
-        return handleComplete({ operatorType, action,state:draft,createSubscriberLink,makeSubscriber });
+        return handleComplete({
+          operatorType,
+          action,
+          state: draft,
+          createSubscriberLink,
+          makeSubscriber,
+        });
         break;
 
       case "SOURCE-COMPLETE":
@@ -86,7 +92,7 @@ function createSubscriberLink({
   // this takes a store { getState,dispatch} because it is called here:
   // rxjs-fun/operators/createOperator.js
   // next: newNext(currentOperatorStore),
-  return ({ getState, dispatch }) => {
+  return ({ getState, dispatch, ...debug }) => {
     // TODO remove depdency on entire state
     const state = getState();
     const observable = state.observables.find((obs) => obs.id == observableId);
@@ -103,6 +109,7 @@ function createSubscriberLink({
       operatorType,
       observableId,
       operatorId,
+      debug,
     });
 
     return subscriber;

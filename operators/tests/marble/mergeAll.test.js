@@ -1,22 +1,10 @@
 import { TestScheduler } from "rxjs/testing";
 import { of, interval } from "rxjs";
 import { take } from "rxjs/operators";
-import { mergeAll } from "../mergeAll.js";
-import { makeStoreWithExtra } from "../redux/store.js";
+import { mergeAll } from "../../mergeAll.js";
+import { makeStoreWithExtra } from "../../redux/store.js";
 
-const cleanMarbles = (testOutput) =>
-  testOutput
-    .map((expectedObject, i, all) => {
-      const padding = "-".repeat(
-        i == 0
-          ? expectedObject.frame
-          : expectedObject.frame - all[i - 1].frame - 1,
-      );
-      if (expectedObject.notification.kind === "C") return padding + "|";
-
-      return padding + expectedObject.notification.value;
-    })
-    .join("");
+import { cleanMarbles } from "../utils/index.js";
 
 describe("mergeAll operator", () => {
   let testScheduler;
@@ -48,7 +36,7 @@ describe("mergeAll operator", () => {
       });
 
       const result$ = source$.pipe(
-        mergeAll({ concurrentLimit: 1 }, { ...storeWithExtra }),
+        mergeAll({ concurrentLimit: 1 }, { ...storeWithExtra })
       );
 
       const expectedMarble = "-----a--b--c--1--2--3--x--y--z|";
@@ -81,7 +69,7 @@ describe("mergeAll operator", () => {
       });
 
       const result$ = source$.pipe(
-        mergeAll({ concurrentLimit: 10 }, { ...storeWithExtra }),
+        mergeAll({ concurrentLimit: 10 }, { ...storeWithExtra })
       );
 
       const expectedMarble = "-----a--b1-c2x-3y--z|";

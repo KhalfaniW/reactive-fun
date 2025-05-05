@@ -6,20 +6,36 @@ export function operate({
   action,
   thisOperator,
   operatorType,
+  /**
+   * Handles emission of values through the operator
+   * @callback onEmissionCallback
+   * @param {Object} params -
+   * @returns {Object} - returns properties to be merged into the operator state
+   */
   onEmmision,
   onComplete,
+  /**
+   * Handles initialization of the operator
+   * @callback onInitCallback
+   * @param {Object} params - Parameters object
+   * @returns {Objectd} - returns properties to be merged into the operator inital state
+   */
+  onInit = () => ({}),
 }) {
   return produce(state, (draft) => {
     switch (action.type) {
       case `INIT(${operatorType})`:
+        const operatorStateDelta = onInit({ state, action });
         draft.operatorStates = [
           {
             type: operatorType,
             id: action.operatorId,
             next: action.next,
             ...initState,
+            ...operatorStateDelta,
           },
         ];
+
         break;
 
       case "SOURCE-COMPLETE":
@@ -32,22 +48,22 @@ export function operate({
         break;
 
       case `HANDLE-EMISSION(${operatorType})`:
-        const delta = onEmmision({
-          thisOperator,
-          draft,
-          state,
-          action,
-          emit: (newValue) => {},
-        });
+        const delta =
+          onEmmision({
+            thisOperator,
+            draft,
+            state,
+            action,
+            emit: (newValue) => {},
+          }) || {};
 
         if (delta.operatorDelta) {
-          //TODO there should be a better way than looping through all operators
-          draft.operatorStates = draft.operatorStates.map((operator) => {
-            if (operator.id === action.operatorId) {
-              return { ...operator, ...delta.operatorDelta };
-            }
-            return operator;
-          });
+          const operator = draft.operatorStates[0];
+          draft.operatorStates = [
+            operator.id === action.operatorId
+              ? { ...operator, ...delta.operatorDelta }
+              : operator,
+          ];
         }
         const shouldEmit = delta.hasOwnProperty("emission");
 

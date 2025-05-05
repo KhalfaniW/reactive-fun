@@ -25,6 +25,15 @@ Object.defineProperty(Observable.prototype, "mainStore", {
   },
 });
 
+Observable.prototype.toJSON = function () {
+  return {
+    subscribe: "[Function]",
+    id: this.id,
+    type: "observable",
+    // m: this._mainStore,
+  };
+};
+
 export function createOperator({
   type,
   newNext,
@@ -76,8 +85,21 @@ export function createOperator({
         observables: [],
       });
       currentOperatorStore.dispatch({
-        ...initOperatorAction,
         next: originalNext,
+        sourceObservable: observable,
+        sourceNext: newNext(currentOperatorStore),
+        resubscribe: () => {
+          observable.subscribe({
+            next: newNext(currentOperatorStore),
+            complete: () => {
+              currentOperatorStore.dispatch({
+                type: "SOURCE-COMPLETE",
+                observable,
+              });
+            },
+          });
+        },
+        ...initOperatorAction,
       });
 
       if (label) {
@@ -99,6 +121,7 @@ export function createOperator({
         },
       });
     });
+
     newObservable.mainStore = mainStore;
     return newObservable;
   };

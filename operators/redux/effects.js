@@ -41,7 +41,7 @@ export function runEffects(state, dispatch_, store) {
     ) || state.operatorStates[0];
 
   switch (state.effectObject.type) {
-    case "COMPLETE_STATE":
+    case "COMPLETE-STATE":
       dispatch({ type: "ALL-COMPLETE" });
       state.complete(store);
       break;
@@ -71,7 +71,7 @@ export function runEffects(state, dispatch_, store) {
       break;
     case "SUBSCRIBE-EFFECT":
       validateIfSubscribable(observable);
-      //state needs to update go before actually subscribing because sometiems the observable/subscriber needs to
+      //state needs to update go before actually subscribing because sometimes the observable/subscriber needs to
       //check the currently subscribed entity for calcuations
       dispatch({
         type: "SUBSCRIPTION-START-1",
@@ -89,6 +89,14 @@ export function runEffects(state, dispatch_, store) {
           unsubscribe: subcribeReturnValue,
         });
       }
+      break;
+
+    case "RESUBSCRIBE-TO-SOURCE":
+      dispatch({
+        type: "SOURCE-RESUBSCRIBE",
+      });
+
+      state.effectObject.resubscribe();
       break;
 
     default:

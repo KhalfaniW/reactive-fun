@@ -6,7 +6,10 @@ import { scanReducer } from "../scanReducer.js";
 import { takeReducer } from "../takeReducer.js";
 import { mapReducer } from "../mapReducer.js";
 import { tapReducer } from "../tapReducer.js";
+import { repeatReducer } from "../repeatReducer.js";
+import { reduceReducer } from "../reduceReducer.js";
 import { mainReducer, subscriptionReducer } from "../main.js";
+import { filterReducer } from "../filterReducer.js";
 
 export const asyncDispatchMiddleware = (store) => (next) => (action) => {
   let syncActivityFinished = false;
@@ -43,9 +46,12 @@ export const stateReducer = (initialState, action) =>
     scanReducer,
     switchAllReducer,
     mapReducer,
+    repeatReducer,
     takeReducer,
     tapReducer,
     exhaustAllReducer,
+    reduceReducer,
+    filterReducer,
   ].reduce(
     (currentState, reducer) => reducer(currentState, action),
     initialState,
@@ -66,6 +72,6 @@ export const addDispatchContext = (store) => (next) => (action) => {
   } catch (dispatchOriginError) {
     stackTraceOrigin = () => dispatchOriginError.stack.split("\n").slice(2);
   }
-  const newAction = { ...action, stackTraceOrigin };
+  const newAction = { ...action, stackTraceOrigin, time: Date.now() };
   return next(newAction);
 };

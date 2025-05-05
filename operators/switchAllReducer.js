@@ -24,6 +24,24 @@ export function switchAllReducer(
 ) {
   const thisOperator = state.operatorStates?.[0];
 
+  if (action.type === "SOURCE-COMPLETE" && thisOperator?.type === "switchAll") {
+    const newState = {
+      ...state,
+      operatorStates: [{ ...thisOperator, isSourceComplete: true }],
+    };
+    if (thisOperator.currentObservableId === null) {
+      return {
+        ...newState,
+        operatorStates: [{ ...thisOperator, isSourceComplete: true }],
+        effectObject: {
+          type: "COMPLETE-OPERATOR",
+          operatorId: action.operatorId,
+        },
+      };
+    }
+    return newState;
+  }
+
   return highOrderOperate({
     initState: {
       isCompleted: false,
@@ -131,7 +149,10 @@ export function switchAllReducer(
         type: `OBSERVABLE-COMPLETE(${operatorType})`,
       });
 
-      if (updatedState.isSourceComplete) {
+      if (
+        updatedState.isSourceComplete &&
+        updatedState.operatorStates[0].currentObservableId === null
+      ) {
         return {
           ...updatedState,
           effectObject: {
@@ -144,7 +165,9 @@ export function switchAllReducer(
     },
     getCompleteCondition: (state) => {
       const thisOperator = state.operatorStates?.[0];
-      return thisOperator.currentObservableId === null;
+      return (
+        thisOperator.currentObservableId === null && state.isSourceComplete
+      );
     },
     state,
     action,
